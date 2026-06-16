@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo } from 'react';
 import { Plus, Trash2, Search, DollarSign, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
-import { db, newId, getMesActual, formatMonto, formatPeriodo, calcularExpensaDepartamento, getEstadoDepartamento, getPropietariosDeDepartamento, getInquilinoActual, getDepartamentosDeEdificio } from '../data/db';
+import { db, newId, getMesActual, formatMonto, formatPeriodo, calcularExpensaDepartamento, getEstadoDepartamento, getPropietariosDeDepartamento, getInquilinoActual, getDepartamentosDeEdificio, getRev } from '../data/db';
 import { Modal, ConfirmDialog, EmptyState } from '../components/UI';
 import PeriodoSelector from '../components/PeriodoSelector';
 
@@ -11,8 +11,8 @@ export default function Cobranzas({ edificioId }) {
   const [editPago, setEditPago] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
 
-  const departamentos = useMemo(() => getDepartamentosDeEdificio(edificioId), [edificioId]);
-  const pagos = useMemo(() => db.getPagos().filter(p => p.periodo === periodo), [periodo]);
+  const departamentos = useMemo(() => getDepartamentosDeEdificio(edificioId), [edificioId, getRev()]);
+  const pagos = useMemo(() => db.getPagos().filter(p => p.periodo === periodo), [periodo, getRev()]);
 
   const estadoUnidades = useMemo(() => {
     return departamentos

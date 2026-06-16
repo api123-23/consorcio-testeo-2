@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { FileText, CheckCircle2, Printer } from 'lucide-react';
-import { db, getMesActual, formatMonto, formatPeriodo, calcularExpensaDepartamento, getEstadoDepartamento, getPropietariosDeDepartamento, getInquilinoActual, getDepartamentosDeEdificio } from '../data/db';
+import { db, getMesActual, formatMonto, formatPeriodo, calcularExpensaDepartamento, getEstadoDepartamento, getPropietariosDeDepartamento, getInquilinoActual, getDepartamentosDeEdificio, getRev } from '../data/db';
 import PeriodoSelector from '../components/PeriodoSelector';
 
 export default function Liquidacion({ edificioId }) {
@@ -27,7 +27,7 @@ export default function Liquidacion({ edificioId }) {
     const recaudado = filas.filter(f => f.pago).reduce((s, f) => s + f.pago.monto, 0);
 
     return { gastos, totalGastos, ordinarios, extraordinarios, sumPorcentajes, filas, totalLiquidado, recaudado };
-  }, [periodo, edificioId]);
+  }, [periodo, edificioId, getRev()]);
 
   const handlePrint = () => window.print();
 

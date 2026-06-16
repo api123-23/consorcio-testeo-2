@@ -7,6 +7,9 @@ let cache = {
 };
 let loaded = false;
 let loading = null;
+let _rev = 0;
+export const getRev = () => _rev;
+function bump() { _rev++; }
 
 export async function loadData() {
   if (loaded) return;
@@ -71,46 +74,46 @@ export const db = {
   // Edificios
   getEdificios: () => cache.edificios || [],
   saveEdificio: (e) => {
-    const record = { ...e };
+    const record = { ...e }; bump();
     updateCache('edificios', record);
     api.post('/edificios', record).catch(console.error);
     return record;
   },
   deleteEdificio: (id) => {
-    cache.edificios = cache.edificios.map(e => e.id === id ? { ...e, activo: 0 } : e);
+    cache.edificios = cache.edificios.map(e => e.id === id ? { ...e, activo: 0 } : e); bump();
     api.del(`/edificios/${id}`).catch(console.error);
   },
 
   // Departamentos
   getDepartamentos: () => cache.departamentos || [],
   saveDepartamento: (d) => {
-    const record = { ...d };
+    const record = { ...d }; bump();
     updateCache('departamentos', record);
     api.post('/departamentos', record).catch(console.error);
     return record;
   },
   deleteDepartamento: (id) => {
-    cache.departamentos = cache.departamentos.map(d => d.id === id ? { ...d, activo: 0 } : d);
+    cache.departamentos = cache.departamentos.map(d => d.id === id ? { ...d, activo: 0 } : d); bump();
     api.del(`/departamentos/${id}`).catch(console.error);
   },
 
   // Personas
   getPersonas: () => cache.personas || [],
   savePersona: (p) => {
-    const record = { ...p };
+    const record = { ...p }; bump();
     updateCache('personas', record);
     api.post('/personas', record).catch(console.error);
     return record;
   },
   deletePersona: (id) => {
-    cache.personas = cache.personas.map(p => p.id === id ? { ...p, activo: 0 } : p);
+    cache.personas = cache.personas.map(p => p.id === id ? { ...p, activo: 0 } : p); bump();
     api.del(`/personas/${id}`).catch(console.error);
   },
 
   // Propietarios
   getPropietarios: () => cache.propietarios || [],
   savePropietario: (r) => {
-    const record = { ...r };
+    const record = { ...r }; bump();
     updateCache('propietarios', record);
     api.post('/propietarios', record).catch(console.error);
     return record;
@@ -118,53 +121,53 @@ export const db = {
   removePropietario: (deptoId, personaId) => {
     cache.propietarios = cache.propietarios.map(r =>
       r.departamento_id === deptoId && r.persona_id === personaId ? { ...r, activo: 0 } : r
-    );
+    ); bump();
     api.del(`/propietarios?departamento_id=${deptoId}&persona_id=${personaId}`).catch(console.error);
   },
 
   // Inquilinos
   getInquilinos: () => cache.inquilinos || [],
   saveInquilino: (r) => {
-    const record = { ...r };
+    const record = { ...r }; bump();
     updateCache('inquilinos', record);
     api.post('/inquilinos', record).catch(console.error);
     return record;
   },
   removeInquilino: (id) => {
-    cache.inquilinos = cache.inquilinos.map(r => r.id === id ? { ...r, activo: 0, fecha_hasta: new Date().toISOString().slice(0, 10) } : r);
+    cache.inquilinos = cache.inquilinos.map(r => r.id === id ? { ...r, activo: 0, fecha_hasta: new Date().toISOString().slice(0, 10) } : r); bump();
     api.del(`/inquilinos/${id}`).catch(console.error);
   },
 
   // Gastos
   getGastos: () => cache.gastos || [],
   saveGasto: (g) => {
-    const record = { ...g };
+    const record = { ...g }; bump();
     updateCache('gastos', record);
     api.post('/gastos', record).catch(console.error);
     return record;
   },
   deleteGasto: (id) => {
-    removeFromCache('gastos', id);
+    removeFromCache('gastos', id); bump();
     api.del(`/gastos/${id}`).catch(console.error);
   },
 
   // Pagos
   getPagos: () => cache.pagos || [],
   savePago: (p) => {
-    const record = { ...p };
+    const record = { ...p }; bump();
     updateCache('pagos', record);
     api.post('/pagos', record).catch(console.error);
     return record;
   },
   deletePago: (id) => {
-    removeFromCache('pagos', id);
+    removeFromCache('pagos', id); bump();
     api.del(`/pagos/${id}`).catch(console.error);
   },
 
   // Liquidaciones
   getLiquidaciones: () => cache.liquidaciones || [],
   saveLiquidacion: (l) => {
-    const record = { ...l };
+    const record = { ...l }; bump();
     updateCache('liquidaciones', record);
     api.post('/liquidaciones', record).catch(console.error);
     return record;

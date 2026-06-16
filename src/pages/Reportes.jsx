@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Download, FileText, BarChart2 } from 'lucide-react';
-import { db, getMesActual, formatMonto, formatPeriodo, calcularExpensaDepartamento, getEstadoDepartamento, getPropietariosDeDepartamento, getInquilinoActual, getDepartamentosDeEdificio } from '../data/db';
+import { db, getMesActual, formatMonto, formatPeriodo, calcularExpensaDepartamento, getEstadoDepartamento, getPropietariosDeDepartamento, getInquilinoActual, getDepartamentosDeEdificio, getRev } from '../data/db';
 import PeriodoSelector from '../components/PeriodoSelector';
 
 function exportCSV(filename, rows, headers) {
@@ -56,7 +56,7 @@ export default function Reportes({ edificioId }) {
     const recaudado = filas.filter(f => f.estado === 'al_dia').reduce((s, f) => s + f.expensa, 0);
 
     return { gastos, pagos, filas, totalGastos, recaudado };
-  }, [periodoSeleccionado, edificioId]);
+  }, [periodoSeleccionado, edificioId, getRev()]);
 
   // Multi-period summary
   const resumen = useMemo(() => {
@@ -74,7 +74,7 @@ export default function Reportes({ edificioId }) {
       }).reduce((s, d) => s + calcularExpensaDepartamento(d, p.val), 0);
       return { periodo: p.label, periodoVal: p.val, gastos: totalGastos, pagados, recaudado, total: departamentos.length };
     });
-  }, [edificioId]);
+  }, [edificioId, getRev()]);
 
   const handleExportLiquidacion = () => {
     exportCSV(`liquidacion_${periodoSeleccionado}`, data.filas.map(f => [

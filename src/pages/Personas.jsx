@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Plus, Pencil, Trash2, Search, Users, AlertCircle, X } from 'lucide-react';
-import { db, newId, validateDNI, validateEmail, isDNIUnique, isEmailUnique } from '../data/db';
+import { db, newId, validateDNI, validateEmail, isDNIUnique, isEmailUnique, getRev } from '../data/db';
 import { Modal, ConfirmDialog, EmptyState } from '../components/UI';
 
 export default function Personas({ edificioId }) {
@@ -19,7 +19,7 @@ export default function Personas({ edificioId }) {
     db.getPropietarios().filter(r => r.activo && deptoIds.includes(r.departamento_id)).forEach(r => props.add(r.persona_id));
     db.getInquilinos().filter(r => r.activo && !r.fecha_hasta && deptoIds.includes(r.departamento_id)).forEach(r => inqs.add(r.persona_id));
     return { props, inqs };
-  }, [edificioId]);
+  }, [edificioId, getRev()]);
 
   const personas = db.getPersonas().filter(p => p.activo);
   const filtradosBase = filtro === 'todos' ? personas

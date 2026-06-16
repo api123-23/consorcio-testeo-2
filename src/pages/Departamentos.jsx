@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo } from 'react';
 import { Plus, Pencil, Trash2, Search, Building2, AlertCircle, UserPlus, X } from 'lucide-react';
-import { db, newId, getMesActual, formatMonto, getEstadoDepartamento, calcularExpensaDepartamento, getPeriodosDeuda, getPropietariosDeDepartamento, getInquilinoActual } from '../data/db';
+import { db, newId, getMesActual, formatMonto, getEstadoDepartamento, calcularExpensaDepartamento, getPeriodosDeuda, getPropietariosDeDepartamento, getInquilinoActual, getRev } from '../data/db';
 import { Modal, ConfirmDialog, EmptyState } from '../components/UI';
 
 export default function Departamentos({ edificioId }) {
@@ -11,7 +11,7 @@ export default function Departamentos({ edificioId }) {
 
   const departamentos = useMemo(() => {
     return db.getDepartamentos().filter(d => d.edificio_id === edificioId);
-  }, [edificioId]);
+  }, [edificioId, getRev()]);
 
   const activos = departamentos.filter(d => d.activo);
   const periodo = getMesActual();

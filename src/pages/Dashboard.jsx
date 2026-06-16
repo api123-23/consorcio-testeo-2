@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Building2, Users, AlertCircle, CheckCircle2, DollarSign, Calendar } from 'lucide-react';
-import { db, getMesActual, formatPeriodo, formatMonto, getEstadoDepartamento, calcularExpensaDepartamento, getPropietariosDeDepartamento, getInquilinoActual, getDepartamentosDeEdificio } from '../data/db';
+import { db, getMesActual, formatPeriodo, formatMonto, getEstadoDepartamento, calcularExpensaDepartamento, getPropietariosDeDepartamento, getInquilinoActual, getDepartamentosDeEdificio, getRev } from '../data/db';
 
 export default function Dashboard({ edificioId }) {
   const data = useMemo(() => {
@@ -30,7 +30,7 @@ export default function Dashboard({ edificioId }) {
     const gastosRecientes = gastos.sort((a, b) => new Date(b.fecha) - new Date(a.fecha)).slice(0, 5);
 
     return { edificio, departamentos, personas, periodo, totalGastos, gastosOrdinarios, gastosExtra, pagados, deudores, montoRecaudado, pagosMes, gastosRecientes };
-  }, [edificioId]);
+  }, [edificioId, getRev()]);
 
   const pctRecaudado = data.totalGastos > 0 ? Math.round((data.montoRecaudado / data.totalGastos) * 100) : 0;
 
