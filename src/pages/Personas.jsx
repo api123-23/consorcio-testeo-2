@@ -193,22 +193,22 @@ function PersonaForm({ editing, onSave, onClose }) {
           <label className="form-label">Nombre completo</label>
           <input className={`form-input ${errors.nombre ? 'error' : ''}`}
             value={form.nombre} onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))}
-            placeholder="Nombre y apellido" autoFocus />
+            placeholder="Nombre y apellido" maxLength={100} autoFocus />
           {errors.nombre && <div className="error-msg"><AlertCircle size={12} /> {errors.nombre}</div>}
         </div>
         <div className="form-row">
           <div className="form-group">
             <label className="form-label">DNI</label>
             <input className={`form-input ${errors.dni ? 'error' : ''}`}
-              value={form.dni} onChange={e => setForm(f => ({ ...f, dni: e.target.value }))}
-              placeholder="Número de documento" />
+              value={form.dni} onChange={e => setForm(f => ({ ...f, dni: e.target.value.replace(/\D/g, '').slice(0, 9) }))}
+              placeholder="Número de documento" maxLength={9} />
             {errors.dni && <div className="error-msg"><AlertCircle size={12} /> {errors.dni}</div>}
           </div>
           <div className="form-group">
             <label className="form-label">Teléfono</label>
             <input className={`form-input ${errors.telefono ? 'error' : ''}`} value={form.telefono}
               onChange={e => setForm(f => ({ ...f, telefono: e.target.value }))}
-              placeholder="Ej: 351-4567890" />
+              placeholder="Ej: 351-4567890" maxLength={30} />
             {errors.telefono && <div className="error-msg"><AlertCircle size={12} /> {errors.telefono}</div>}
           </div>
         </div>
@@ -216,7 +216,7 @@ function PersonaForm({ editing, onSave, onClose }) {
             <label className="form-label">Email</label>
             <input className={`form-input ${errors.email ? 'error' : ''}`}
               value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
-              placeholder="correo@ejemplo.com" />
+              placeholder="correo@ejemplo.com" maxLength={100} />
             {errors.email && <div className="error-msg"><AlertCircle size={12} /> {errors.email}</div>}
           </div>
           <div className="form-row">
@@ -224,13 +224,13 @@ function PersonaForm({ editing, onSave, onClose }) {
               <label className="form-label">Dirección</label>
               <input className="form-input" value={form.direccion}
                 onChange={e => setForm(f => ({ ...f, direccion: e.target.value }))}
-                placeholder="Dirección particular" />
+                placeholder="Dirección particular" maxLength={200} />
             </div>
             <div className="form-group">
               <label className="form-label">Observaciones</label>
               <input className="form-input" value={form.observaciones}
                 onChange={e => setForm(f => ({ ...f, observaciones: e.target.value }))}
-                placeholder="Notas adicionales" />
+                placeholder="Notas adicionales" maxLength={500} />
             </div>
           </div>
         </div>

@@ -208,6 +208,7 @@ function CobranzaForm({ edificioId, periodo, preselectDeptoId, onSave, onClose }
   const errors = {};
   if (!form.departamento_id) errors.departamento_id = 'Seleccioná un departamento';
   if (!form.monto || form.monto <= 0) errors.monto = 'Monto inválido';
+  if (!form.fecha_pago) errors.fecha_pago = 'Requerido';
 
   const handleSubmit = () => {
     if (Object.keys(errors).length) return;
@@ -264,8 +265,9 @@ function CobranzaForm({ edificioId, periodo, preselectDeptoId, onSave, onClose }
             <div className="form-row">
               <div className="form-group">
                 <label className="form-label">Fecha de pago</label>
-                <input className="form-input" type="date" value={form.fecha_pago}
+                <input className={`form-input ${errors.fecha_pago ? 'error' : ''}`} type="date" value={form.fecha_pago}
                   onChange={e => setForm(f => ({ ...f, fecha_pago: e.target.value }))} />
+                {errors.fecha_pago && <div className="error-msg"><AlertCircle size={12} /> {errors.fecha_pago}</div>}
               </div>
               <div className="form-group">
                 <label className="form-label">Método</label>
@@ -282,7 +284,7 @@ function CobranzaForm({ edificioId, periodo, preselectDeptoId, onSave, onClose }
               <label className="form-label">Comprobante (opcional)</label>
               <input className="form-input" value={form.comprobante}
                 onChange={e => setForm(f => ({ ...f, comprobante: e.target.value }))}
-                placeholder="N° de comprobante" />
+                placeholder="N° de comprobante" maxLength={50} />
             </div>
           </>
         )}

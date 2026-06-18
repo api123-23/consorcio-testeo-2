@@ -176,6 +176,7 @@ function GastoForm({ editing, periodoActual, onSave, onClose }) {
   const errors = {};
   if (!form.descripcion.trim()) errors.descripcion = 'Requerido';
   if (!form.monto || form.monto <= 0) errors.monto = 'Debe ser mayor a 0';
+  if (!form.fecha) errors.fecha = 'Requerido';
 
   const handleSubmit = () => {
     if (Object.keys(errors).length) return;
@@ -190,7 +191,7 @@ function GastoForm({ editing, periodoActual, onSave, onClose }) {
           <label className="form-label">Descripción</label>
           <input className={`form-input ${errors.descripcion ? 'error' : ''}`}
             value={form.descripcion} onChange={e => setForm(f => ({ ...f, descripcion: e.target.value }))}
-            placeholder="Ej: Limpieza y mantenimiento" autoFocus />
+            placeholder="Ej: Limpieza y mantenimiento" maxLength={200} autoFocus />
           {errors.descripcion && <div className="error-msg"><AlertCircle size={12} /> {errors.descripcion}</div>}
         </div>
         <div className="form-row">
@@ -220,15 +221,16 @@ function GastoForm({ editing, periodoActual, onSave, onClose }) {
           </div>
           <div className="form-group">
             <label className="form-label">Fecha</label>
-            <input className="form-input" type="date" value={form.fecha}
+            <input className={`form-input ${errors.fecha ? 'error' : ''}`} type="date" value={form.fecha}
               onChange={e => setForm(f => ({ ...f, fecha: e.target.value }))} />
+            {errors.fecha && <div className="error-msg"><AlertCircle size={12} /> {errors.fecha}</div>}
           </div>
         </div>
         <div className="form-group">
           <label className="form-label">Proveedor</label>
           <input className="form-input" value={form.proveedor}
             onChange={e => setForm(f => ({ ...f, proveedor: e.target.value }))}
-            placeholder="Nombre del proveedor" />
+            placeholder="Nombre del proveedor" maxLength={100} />
         </div>
         {!editing && form.tipo === 'ordinario' && (
           <label className="checkbox-label">

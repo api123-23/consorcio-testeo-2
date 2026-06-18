@@ -63,6 +63,8 @@ function BuildingSelector({ edificioId, onSelect }) {
 
   const errors = {};
   if (!buildingForm.nombre.trim()) errors.nombre = 'Requerido';
+  if (!buildingForm.admin.trim()) errors.admin = 'Requerido';
+  if (!buildingForm.direccion.trim()) errors.direccion = 'Requerido';
   if (!buildingForm.metros_totales || Number(buildingForm.metros_totales) <= 0) errors.metros_totales = 'Debe ser mayor a 0';
 
   const handleCreate = () => {
@@ -125,15 +127,16 @@ function BuildingSelector({ edificioId, onSelect }) {
                 <input className={`form-input ${errors.nombre ? 'error' : ''}`}
                   value={buildingForm.nombre}
                   onChange={e => setBuildingForm(f => ({ ...f, nombre: e.target.value }))}
-                  placeholder="Ej: Consorcio Belgrano 1240" autoFocus />
+                  placeholder="Ej: Consorcio Belgrano 1240" maxLength={100} autoFocus />
                 {errors.nombre && <div className="error-msg"><AlertCircle size={12} /> {errors.nombre}</div>}
               </div>
               <div className="form-row">
                 <div className="form-group">
                   <label className="form-label">Administrador</label>
-                  <input className="form-input" value={buildingForm.admin}
+                  <input className={`form-input ${errors.admin ? 'error' : ''}`} value={buildingForm.admin}
                     onChange={e => setBuildingForm(f => ({ ...f, admin: e.target.value }))}
-                    placeholder="Nombre del administrador" />
+                    placeholder="Nombre del administrador" maxLength={100} />
+                  {errors.admin && <div className="error-msg"><AlertCircle size={12} /> {errors.admin}</div>}
                 </div>
                 <div className="form-group">
                   <label className="form-label">Metros² totales</label>
@@ -146,9 +149,10 @@ function BuildingSelector({ edificioId, onSelect }) {
               </div>
               <div className="form-group">
                 <label className="form-label">Dirección</label>
-                <input className="form-input" value={buildingForm.direccion}
+                <input className={`form-input ${errors.direccion ? 'error' : ''}`} value={buildingForm.direccion}
                   onChange={e => setBuildingForm(f => ({ ...f, direccion: e.target.value }))}
-                  placeholder="Ej: Belgrano 1240, Córdoba" />
+                  placeholder="Ej: Belgrano 1240, Córdoba" maxLength={200} />
+                {errors.direccion && <div className="error-msg"><AlertCircle size={12} /> {errors.direccion}</div>}
               </div>
             </div>
             <div className="modal-footer">
@@ -185,6 +189,8 @@ function SettingsModal({ edificioId, onClose }) {
 
   const errors = {};
   if (!config.nombre.trim()) errors.nombre = 'Requerido';
+  if (!config.admin.trim()) errors.admin = 'Requerido';
+  if (!config.direccion.trim()) errors.direccion = 'Requerido';
   if (!config.metros_totales || config.metros_totales <= 0) errors.metros_totales = 'Debe ser mayor a 0';
 
   const handleSave = () => {
@@ -206,15 +212,16 @@ function SettingsModal({ edificioId, onClose }) {
             <label className="form-label">Nombre del consorcio</label>
             <input className={`form-input ${errors.nombre ? 'error' : ''}`} value={config.nombre}
               onChange={e => setConfig(c => ({ ...c, nombre: e.target.value }))}
-              placeholder="Ej: Consorcio Belgrano 1240" />
+              placeholder="Ej: Consorcio Belgrano 1240" maxLength={100} />
             {errors.nombre && <div className="error-msg"><AlertCircle size={12} /> {errors.nombre}</div>}
           </div>
           <div className="form-row">
             <div className="form-group">
               <label className="form-label">Administrador</label>
-              <input className="form-input" value={config.admin}
+              <input className={`form-input ${errors.admin ? 'error' : ''}`} value={config.admin}
                 onChange={e => setConfig(c => ({ ...c, admin: e.target.value }))}
-                placeholder="Nombre del administrador" />
+                placeholder="Nombre del administrador" maxLength={100} />
+              {errors.admin && <div className="error-msg"><AlertCircle size={12} /> {errors.admin}</div>}
             </div>
             <div className="form-group">
               <label className="form-label">Metros² totales</label>
@@ -227,9 +234,10 @@ function SettingsModal({ edificioId, onClose }) {
           </div>
           <div className="form-group">
             <label className="form-label">Dirección del edificio</label>
-            <input className="form-input" value={config.direccion}
+            <input className={`form-input ${errors.direccion ? 'error' : ''}`} value={config.direccion}
               onChange={e => setConfig(c => ({ ...c, direccion: e.target.value }))}
-              placeholder="Ej: Belgrano 1240, Córdoba" />
+              placeholder="Ej: Belgrano 1240, Córdoba" maxLength={200} />
+            {errors.direccion && <div className="error-msg"><AlertCircle size={12} /> {errors.direccion}</div>}
           </div>
           <div className="theme-toggle">
             <span className="theme-toggle-label">
@@ -255,6 +263,8 @@ function NewBuildingModal({ onSave, onClose }) {
   const [form, setForm] = useState({ nombre: '', direccion: '', admin: '', metros_totales: '' });
   const errors = {};
   if (!form.nombre.trim()) errors.nombre = 'Requerido';
+  if (!form.admin.trim()) errors.admin = 'Requerido';
+  if (!form.direccion.trim()) errors.direccion = 'Requerido';
   if (!form.metros_totales || Number(form.metros_totales) <= 0) errors.metros_totales = 'Debe ser mayor a 0';
   const handleCreate = () => {
     if (Object.keys(errors).length) return;
@@ -274,15 +284,16 @@ function NewBuildingModal({ onSave, onClose }) {
             <label className="form-label">Nombre del edificio</label>
             <input className={`form-input ${errors.nombre ? 'error' : ''}`} value={form.nombre}
               onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))}
-              placeholder="Ej: Consorcio Belgrano 1240" autoFocus />
+              placeholder="Ej: Consorcio Belgrano 1240" maxLength={100} autoFocus />
             {errors.nombre && <div className="error-msg"><AlertCircle size={12} /> {errors.nombre}</div>}
           </div>
           <div className="form-row">
             <div className="form-group">
               <label className="form-label">Administrador</label>
-              <input className="form-input" value={form.admin}
+              <input className={`form-input ${errors.admin ? 'error' : ''}`} value={form.admin}
                 onChange={e => setForm(f => ({ ...f, admin: e.target.value }))}
-                placeholder="Nombre del administrador" />
+                placeholder="Nombre del administrador" maxLength={100} />
+              {errors.admin && <div className="error-msg"><AlertCircle size={12} /> {errors.admin}</div>}
             </div>
             <div className="form-group">
               <label className="form-label">Metros² totales</label>
@@ -295,9 +306,10 @@ function NewBuildingModal({ onSave, onClose }) {
           </div>
           <div className="form-group">
             <label className="form-label">Dirección</label>
-            <input className="form-input" value={form.direccion}
+            <input className={`form-input ${errors.direccion ? 'error' : ''}`} value={form.direccion}
               onChange={e => setForm(f => ({ ...f, direccion: e.target.value }))}
-              placeholder="Ej: Belgrano 1240, Córdoba" />
+              placeholder="Ej: Belgrano 1240, Córdoba" maxLength={200} />
+            {errors.direccion && <div className="error-msg"><AlertCircle size={12} /> {errors.direccion}</div>}
           </div>
         </div>
         <div className="modal-footer">

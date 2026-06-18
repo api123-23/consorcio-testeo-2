@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo } from 'react';
 import { Plus, Pencil, Trash2, Search, Building2, AlertCircle, UserPlus, X } from 'lucide-react';
-import { db, newId, getMesActual, formatMonto, getEstadoDepartamento, calcularExpensaDepartamento, getPeriodosDeuda, getPropietariosDeDepartamento, getInquilinoActual, getRev } from '../data/db';
+import { db, newId, getMesActual, formatMonto, getEstadoDepartamento, calcularExpensaDepartamento, getPeriodosDeuda, getPropietariosDeDepartamento, getInquilinoActual, getRev, validateDNI, validateEmail, isDNIUnique, isEmailUnique } from '../data/db';
 import { Modal, ConfirmDialog, EmptyState } from '../components/UI';
 
 export default function Departamentos({ edificioId }) {
@@ -167,8 +167,16 @@ function PersonSearch({ onSelect, onClose }) {
     p.dni.includes(query)
   ) : personas;
 
+  const newErrors = {};
+  if (!newName.trim()) newErrors.nombre = true;
+  if (!newTel.trim()) newErrors.telefono = true;
+  if (newDni && !validateDNI(newDni)) newErrors.dni = true;
+  if (newDni && !isDNIUnique(newDni)) newErrors.dniDupe = true;
+  if (newEmail && !validateEmail(newEmail)) newErrors.email = true;
+  if (newEmail && !isEmailUnique(newEmail)) newErrors.emailDupe = true;
+
   const handleCreate = () => {
-    if (!newName.trim()) return;
+    if (Object.keys(newErrors).length) return;
     const p = { id: newId('p'), nombre: newName.trim(), dni: newDni, email: newEmail, telefono: newTel, direccion: newDir, activo: 1 };
     db.savePersona(p);
     onSelect(p);
@@ -186,25 +194,33 @@ function PersonSearch({ onSelect, onClose }) {
             <div>
               <div className="form-group">
                 <label className="form-label">Nombre completo</label>
-                <input className="form-input" value={newName} onChange={e => setNewName(e.target.value)}
+                <input className={`form-input ${newErrors.nombre ? 'error' : ''}`} value={newName} onChange={e => setNewName(e.target.value)}
                   placeholder="Nombre y apellido" autoFocus />
+                {newErrors.nombre && <div className="error-msg"><AlertCircle size={12} /> El nombre es requerido</div>}
               </div>
               <div className="form-row">
                 <div className="form-group">
                   <label className="form-label">DNI</label>
-                  <input className="form-input" value={newDni} onChange={e => setNewDni(e.target.value)}
-                    placeholder="Número de documento" />
+                  <input className={`form-input ${newErrors.dni || newErrors.dniDupe ? 'error' : ''}`} value={newDni}
+                    onChange={e => setNewDni(e.target.value.replace(/\D/g, '').slice(0, 9))}
+                    placeholder="Número de documento" maxLength={9} />
+                  {newErrors.dni && <div className="error-msg"><AlertCircle size={12} /> DNI inválido (7-9 dígitos)</div>}
+                  {newErrors.dniDupe && <div className="error-msg"><AlertCircle size={12} /> DNI ya registrado</div>}
                 </div>
                 <div className="form-group">
                   <label className="form-label">Teléfono</label>
-                  <input className="form-input" value={newTel} onChange={e => setNewTel(e.target.value)}
+                  <input className={`form-input ${newErrors.telefono ? 'error' : ''}`} value={newTel} onChange={e => setNewTel(e.target.value)}
                     placeholder="Ej: 351-4567890" />
+                  {newErrors.telefono && <div className="error-msg"><AlertCircle size={12} /> El teléfono es requerido</div>}
                 </div>
               </div>
               <div className="form-group">
                 <label className="form-label">Email</label>
-                <input className="form-input" value={newEmail} onChange={e => setNewEmail(e.target.value)}
+                <input className={`form-input ${newErrors.email || newErrors.emailDupe ? 'error' : ''}`} value={newEmail}
+                  onChange={e => setNewEmail(e.target.value)}
                   placeholder="correo@ejemplo.com" />
+                {newErrors.email && <div className="error-msg"><AlertCircle size={12} /> Email inválido</div>}
+                {newErrors.emailDupe && <div className="error-msg"><AlertCircle size={12} /> Email ya registrado</div>}
               </div>
               <div className="form-group">
                 <label className="form-label">Dirección</label>
