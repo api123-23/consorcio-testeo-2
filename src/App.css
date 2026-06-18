@@ -370,6 +370,11 @@ tr:hover td { background: #FAFBFC; }
 }
 .depto-select-card:hover { border-color: var(--accent); background: var(--accent-light); }
 
+/* Monto input with pago total button */
+.monto-input-wrap { display: flex; gap: 6px; align-items: flex-start; }
+.monto-input-wrap .form-input { flex: 1; }
+.monto-total-btn { white-space: nowrap; margin-top: 0; padding: 9px 12px; }
+
 /* List rows (dashboard) */
 .list-row {
   display: flex; align-items: center; justify-content: space-between;

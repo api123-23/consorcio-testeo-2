@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Plus, Trash2, Search, DollarSign, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
 import { db, newId, getMesActual, formatMonto, formatPeriodo, calcularExpensaDepartamento, getEstadoDepartamento, getPropietariosDeDepartamento, getInquilinoActual, getDepartamentosDeEdificio, getRev } from '../data/db';
 import { Modal, ConfirmDialog, EmptyState } from '../components/UI';
@@ -10,6 +10,7 @@ export default function Cobranzas({ edificioId }) {
   const [showForm, setShowForm] = useState(false);
   const [editPago, setEditPago] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
+  const [preselectDeptoId, setPreselectDeptoId] = useState(null);
 
   const departamentos = useMemo(() => getDepartamentosDeEdificio(edificioId), [edificioId, getRev()]);
   const pagos = useMemo(() => db.getPagos().filter(p => p.periodo === periodo), [periodo, getRev()]);
@@ -131,7 +132,7 @@ export default function Cobranzas({ edificioId }) {
                   <td>
                     {e.estado === 'deudor' ? (
                       <button className="btn btn-success btn-sm"
-                        onClick={() => { setEditPago(null); setShowForm(true); setSearch(e.departamento.numero); }}>
+                        onClick={() => { setEditPago(null); setShowForm(true); setPreselectDeptoId(e.departamento.id); }}>
                         Registrar pago
                       </button>
                     ) : e.pago && (
@@ -154,9 +155,9 @@ export default function Cobranzas({ edificioId }) {
         <CobranzaForm
           edificioId={edificioId}
           periodo={periodo}
-          searchDepto={search}
+          preselectDeptoId={preselectDeptoId}
           onSave={handleSavePago}
-          onClose={() => { setEditPago(null); setShowForm(false); }}
+          onClose={() => { setEditPago(null); setShowForm(false); setPreselectDeptoId(null); }}
         />
       )}
 
@@ -173,7 +174,7 @@ export default function Cobranzas({ edificioId }) {
   );
 }
 
-function CobranzaForm({ edificioId, periodo, searchDepto, onSave, onClose }) {
+function CobranzaForm({ edificioId, periodo, preselectDeptoId, onSave, onClose }) {
   const departamentos = useMemo(() => getDepartamentosDeEdificio(edificioId).filter(d => d.activo), [edificioId]);
   const [selectedDepto, setSelectedDepto] = useState(null);
   const [form, setForm] = useState({
@@ -185,10 +186,24 @@ function CobranzaForm({ edificioId, periodo, searchDepto, onSave, onClose }) {
     comprobante: '',
   });
 
+  const expensaCalculada = selectedDepto ? calcularExpensaDepartamento(selectedDepto, periodo) : 0;
+
+  // Auto-select if preselectDeptoId is provided
+  useEffect(() => {
+    if (preselectDeptoId && !selectedDepto) {
+      const d = departamentos.find(dep => dep.id === preselectDeptoId);
+      if (d) handleDeptoSelect(d);
+    }
+  }, [preselectDeptoId]);
+
   const handleDeptoSelect = (d) => {
     setSelectedDepto(d);
     const expensa = calcularExpensaDepartamento(d, periodo);
     setForm(f => ({ ...f, departamento_id: d.id, monto: expensa }));
+  };
+
+  const handlePagoTotal = () => {
+    setForm(f => ({ ...f, monto: expensaCalculada }));
   };
 
   const errors = {};
@@ -216,9 +231,7 @@ function CobranzaForm({ edificioId, periodo, searchDepto, onSave, onClose }) {
           ) : null}
           {!selectedDepto && (
             <div className="depto-select-grid">
-              {departamentos.filter(d =>
-                !searchDepto || d.numero.toLowerCase().includes(searchDepto.toLowerCase())
-              ).map(d => (
+              {departamentos.map(d => (
                 <button key={d.id} className="depto-select-card" onClick={() => handleDeptoSelect(d)}>
                   <span className="font-medium">Unidad {d.numero}</span>
                   <span className="text-xs text-muted">{d.porcentaje}%</span>
@@ -238,8 +251,14 @@ function CobranzaForm({ edificioId, periodo, searchDepto, onSave, onClose }) {
               </div>
               <div className="form-group">
                 <label className="form-label">Monto</label>
-                <input className={`form-input ${errors.monto ? 'error' : ''}`} type="number"
-                  value={form.monto} onChange={e => setForm(f => ({ ...f, monto: e.target.value }))} />
+                <div className="monto-input-wrap">
+                  <input className={`form-input ${errors.monto ? 'error' : ''}`} type="number"
+                    value={form.monto} onChange={e => setForm(f => ({ ...f, monto: e.target.value }))} />
+                  <button className="btn btn-sm btn-secondary monto-total-btn" onClick={handlePagoTotal}
+                    title={`Completar con ${formatMonto(expensaCalculada)}`}>
+                    Pago total
+                  </button>
+                </div>
                 {errors.monto && <div className="error-msg"><AlertCircle size={12} /> {errors.monto}</div>}
               </div>
             </div>
