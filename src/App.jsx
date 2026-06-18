@@ -320,6 +320,7 @@ export default function App() {
   const [periodo, setPeriodo] = useState(getMesActual());
   const [showWelcome, setShowWelcome] = useState(true);
   const [welcomeHiding, setWelcomeHiding] = useState(false);
+  const toasts = useToastState();
 
   const handleWelcomeContinue = () => {
     setWelcomeHiding(true);
@@ -396,7 +397,6 @@ export default function App() {
 
   const config = db.getEdificios().find(e => e.id === edificioId) || {};
   const PageComponent = PAGES[page] || Dashboard;
-  const toasts = useToastState();
 
   const grupos = ['principal', 'gestion', 'operaciones'];
   const grupoLabels = { principal: null, gestion: 'Gestión', operaciones: 'Operaciones' };
