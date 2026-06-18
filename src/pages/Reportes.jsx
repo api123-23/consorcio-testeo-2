@@ -36,7 +36,8 @@ export default function Reportes({ edificioId, periodo: periodoSeleccionado, set
     const filas = departamentos.map(d => {
       const expensa = calcularExpensaDepartamento(d, periodoSeleccionado);
       const estado = getEstadoDepartamento(d.id, periodoSeleccionado);
-      const pago = pagos.find(p => p.departamento_id === d.id && p.periodo === periodoSeleccionado);
+      const pagosDepto = pagos.filter(p => p.departamento_id === d.id && p.periodo === periodoSeleccionado);
+      const totalPagado = pagosDepto.reduce((s, p) => s + p.monto, 0);
       const props = getPropietariosDeDepartamento(d.id);
       const inq = getInquilinoActual(d.id);
       return {
@@ -46,9 +47,9 @@ export default function Reportes({ edificioId, periodo: periodoSeleccionado, set
         porcentaje: d.porcentaje,
         expensa,
         estado,
-        montoPagado: pago?.monto || 0,
-        metodo: pago?.metodo || '',
-        fechaPago: pago?.fecha_pago || '',
+        montoPagado: totalPagado,
+        metodo: pagosDepto.map(p => p.metodo).filter(Boolean).join(', '),
+        fechaPago: pagosDepto.map(p => p.fecha_pago).filter(Boolean).join(', '),
       };
     });
 
@@ -63,14 +64,9 @@ export default function Reportes({ edificioId, periodo: periodoSeleccionado, set
     return periodos.slice(0, 6).reverse().map(p => {
       const gastosP = db.getGastos().filter(g => g.periodo === p.val && g.edificio_id === edificioId);
       const totalGastos = gastosP.reduce((s, g) => s + g.monto, 0);
-      const pagados = departamentos.filter(d => {
-        const pago = db.getPagos().find(pg => pg.departamento_id === d.id && pg.periodo === p.val);
-        return !!pago;
-      }).length;
-      const recaudado = departamentos.filter(d => {
-        const pago = db.getPagos().find(pg => pg.departamento_id === d.id && pg.periodo === p.val);
-        return !!pago;
-      }).reduce((s, d) => s + calcularExpensaDepartamento(d, p.val), 0);
+      const pagosPeriodo = db.getPagos().filter(pg => pg.periodo === p.val && departamentos.some(d => d.id === pg.departamento_id));
+      const pagados = new Set(pagosPeriodo.map(pg => pg.departamento_id)).size;
+      const recaudado = pagosPeriodo.reduce((s, pg) => s + pg.monto, 0);
       return { periodo: p.label, periodoVal: p.val, gastos: totalGastos, pagados, recaudado, total: departamentos.length };
     });
   }, [edificioId, getRev()]);

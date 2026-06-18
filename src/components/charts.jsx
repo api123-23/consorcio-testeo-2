@@ -22,8 +22,8 @@ export default function EvolucionChart({ edificioId }) {
       const gastos = db.getGastos().filter(g => g.periodo === p.val && g.edificio_id === edificioId);
       const totalGastos = gastos.reduce((s, g) => s + g.monto, 0);
       const recaudado = departamentos.reduce((s, d) => {
-        const pago = db.getPagos().find(pg => pg.departamento_id === d.id && pg.periodo === p.val);
-        return s + (pago ? pago.monto : 0);
+        const pagos = db.getPagos().filter(pg => pg.departamento_id === d.id && pg.periodo === p.val);
+        return s + pagos.reduce((sum, pg) => sum + pg.monto, 0);
       }, 0);
       return { label: p.label, gastos: totalGastos, recaudado, periodo: p.val };
     });

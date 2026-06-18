@@ -19,11 +19,14 @@ export default function Dashboard({ edificioId }) {
     let pagados = 0, parciales = 0, deudores = 0, montoRecaudado = 0;
     departamentos.forEach(d => {
       const estado = getEstadoDepartamento(d.id, periodo);
-      if (estado === 'al_dia') { pagados++; montoRecaudado += calcularExpensaDepartamento(d, periodo); }
+      const pagosDepto = db.getPagos().filter(p => p.departamento_id === d.id && p.periodo === periodo);
+      if (estado === 'al_dia') {
+        pagados++;
+        montoRecaudado += calcularExpensaDepartamento(d, periodo);
+      }
       else if (estado === 'parcial') {
         parciales++;
-        const pago = db.getPagos().find(p => p.departamento_id === d.id && p.periodo === periodo);
-        if (pago) montoRecaudado += pago.monto;
+        montoRecaudado += pagosDepto.reduce((s, p) => s + p.monto, 0);
       }
       else deudores++;
     });

@@ -15,14 +15,15 @@ export default function Liquidacion({ edificioId, periodo, setPeriodo }) {
     const filas = departamentos.map(d => {
       const expensa = calcularExpensaDepartamento(d, periodo);
       const estado = getEstadoDepartamento(d.id, periodo);
-      const pago = db.getPagos().find(p => p.departamento_id === d.id && p.periodo === periodo);
+      const pagosDepto = db.getPagos().filter(p => p.departamento_id === d.id && p.periodo === periodo);
+      const totalPagado = pagosDepto.reduce((s, p) => s + p.monto, 0);
       const props = getPropietariosDeDepartamento(d.id);
       const inq = getInquilinoActual(d.id);
-      return { departamento: d, expensa, estado, pago, propietarios: props, ocupante: inq || props[0] };
+      return { departamento: d, expensa, estado, pago: pagosDepto[0] || null, pagos: pagosDepto, totalPagado, propietarios: props, ocupante: inq || props[0] };
     });
 
     const totalLiquidado = filas.reduce((s, f) => s + f.expensa, 0);
-    const recaudado = filas.filter(f => f.pago).reduce((s, f) => s + f.pago.monto, 0);
+    const recaudado = filas.reduce((s, f) => s + f.totalPagado, 0);
     const aRecaudar = filas.filter(f => f.propietarios.length > 0).reduce((s, f) => s + f.expensa, 0);
     const pctRecaudadoOcupados = aRecaudar > 0 ? Math.round((recaudado / aRecaudar) * 100) : 0;
 
@@ -140,7 +141,7 @@ export default function Liquidacion({ edificioId, periodo, setPeriodo }) {
                     <td className="text-muted">{f.ocupante?.nombre?.split(' ')[0] || '—'}</td>
                     <td>{f.departamento.porcentaje}%</td>
                     <td className="font-medium">{formatMonto(f.expensa)}</td>
-                    <td>{f.pago ? <span style={{ color: 'var(--success)' }} className="font-medium">{formatMonto(f.pago.monto)}</span> : '—'}</td>
+                    <td>{f.totalPagado > 0 ? <span style={{ color: 'var(--success)' }} className="font-medium">{formatMonto(f.totalPagado)}</span> : '—'}</td>
                     <td>
                       {f.estado === 'al_dia'
                         ? <CheckCircle2 size={16} style={{ color: 'var(--success)' }} />

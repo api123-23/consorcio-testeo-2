@@ -19,11 +19,12 @@ export default function Cobranzas({ edificioId, periodo, setPeriodo }) {
       .filter(d => d.activo)
       .map(d => {
         const estado = getEstadoDepartamento(d.id, periodo);
-        const pago = pagos.find(p => p.departamento_id === d.id);
+        const pagosDepto = pagos.filter(p => p.departamento_id === d.id);
+        const totalPagado = pagosDepto.reduce((s, p) => s + p.monto, 0);
         const expensa = calcularExpensaDepartamento(d, periodo);
         const props = getPropietariosDeDepartamento(d.id);
         const inq = getInquilinoActual(d.id);
-        return { departamento: d, estado, pago, expensa, propietarios: props, inquilino: inq };
+        return { departamento: d, estado, pagos: pagosDepto, pago: pagosDepto[0] || null, totalPagado, expensa, propietarios: props, inquilino: inq };
       });
   }, [departamentos, pagos, periodo]);
 
@@ -35,7 +36,7 @@ export default function Cobranzas({ edificioId, periodo, setPeriodo }) {
   const pagados = estadoUnidades.filter(e => e.estado === 'al_dia').length;
   const parciales = estadoUnidades.filter(e => e.estado === 'parcial').length;
   const deudores = estadoUnidades.filter(e => e.estado === 'deudor').length;
-  const totalRecaudado = estadoUnidades.filter(e => e.pago).reduce((s, e) => s + e.pago.monto, 0);
+  const totalRecaudado = pagos.reduce((s, p) => s + p.monto, 0);
 
   const handleSavePago = (data) => {
     if (editPago) {
@@ -123,11 +124,11 @@ export default function Cobranzas({ edificioId, periodo, setPeriodo }) {
                     </span>
                   </td>
                   <td>
-                    {e.pago ? (
+                    {e.totalPagado > 0 ? (
                       <span className="text-sm font-medium" style={{ color: 'var(--success)' }}>
-                        {formatMonto(e.pago.monto)}
+                        {formatMonto(e.totalPagado)}
                         <span className="text-xs text-muted" style={{ display: 'block' }}>
-                          {e.pago.metodo}
+                          {e.pagos.map(p => p.metodo).filter(Boolean).join(', ') || e.pago?.metodo}
                         </span>
                       </span>
                     ) : (
@@ -140,7 +141,7 @@ export default function Cobranzas({ edificioId, periodo, setPeriodo }) {
                         onClick={() => { setEditPago(null); setShowForm(true); setPreselectDeptoId(e.departamento.id); }}>
                         {e.estado === 'parcial' ? 'Completar pago' : 'Registrar pago'}
                       </button>
-                    ) : e.pago && (
+                    ) : e.estado === 'al_dia' && e.pago && (
                       <div className="flex gap-2">
                         <button className="btn-icon btn-sm" title="Eliminar pago"
                           onClick={() => setConfirmDelete(e.pago)}>
@@ -224,7 +225,7 @@ function CobranzaForm({ edificioId, periodo, preselectDeptoId, onSave, onClose }
   if (!form.monto || form.monto <= 0) errors.monto = 'Monto inválido';
 
   // Valida que el monto no supere lo que resta pagar
-  if (selectedDepto && form.monto > 0 && Number(form.monto) > restante && pagosExistentes.length > 0) {
+  if (selectedDepto && form.monto > 0 && restante >= 0 && Number(form.monto) > restante) {
     errors.monto = `Solo resta pagar ${formatMonto(restante)}`;
   }
 
