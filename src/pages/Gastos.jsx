@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Pencil, Trash2, Search, Receipt, AlertCircle } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Receipt, AlertCircle, Repeat } from 'lucide-react';
 import { db, newId, formatMonto, formatPeriodo } from '../data/db';
 import { Modal, ConfirmDialog, EmptyState } from '../components/UI';
 import PeriodoSelector from '../components/PeriodoSelector';
@@ -163,6 +163,7 @@ function GastoForm({ editing, periodoActual, onSave, onClose }) {
     periodo: editing?.periodo || periodoActual,
     fecha: editing?.fecha || hoyStr,
     proveedor: editing?.proveedor || '',
+    recurrente: editing?.recurrente || false,
   });
 
   const periodos = [];
@@ -229,6 +230,14 @@ function GastoForm({ editing, periodoActual, onSave, onClose }) {
             onChange={e => setForm(f => ({ ...f, proveedor: e.target.value }))}
             placeholder="Nombre del proveedor" />
         </div>
+        {!editing && form.tipo === 'ordinario' && (
+          <label className="checkbox-label">
+            <input type="checkbox" checked={form.recurrente}
+              onChange={e => setForm(f => ({ ...f, recurrente: e.target.checked }))} />
+            <Repeat size={14} />
+            Repetir mensualmente — crear plantillas con monto $0 para meses siguientes
+          </label>
+        )}
       </div>
       <div className="modal-footer">
         <button className="btn btn-secondary" onClick={onClose}>Cancelar</button>

@@ -1,4 +1,5 @@
 import { api } from '../api';
+import { toast } from '../components/toast';
 
 let cache = {
   edificios: [], departamentos: [], personas: [],
@@ -70,6 +71,38 @@ export function getDepartamentosDeEdificio(edificioId, soloActivos = true) {
 
 // ─── CRUD object ───────────────────────────────────────────────────
 
+export function getSiguientePeriodo(periodo, meses = 1) {
+  const [year, month] = periodo.split('-').map(Number);
+  const d = new Date(year, month - 1 + meses, 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function autoCrearRecurrentes(gasto) {
+  if (!gasto.recurrente || gasto.tipo !== 'ordinario') return;
+  for (let i = 1; i <= 11; i++) {
+    const proxPeriodo = getSiguientePeriodo(gasto.periodo, i);
+    const existe = cache.gastos.some(g =>
+      g.descripcion === gasto.descripcion &&
+      g.periodo === proxPeriodo &&
+      g.edificio_id === gasto.edificio_id &&
+      g.tipo === 'ordinario'
+    );
+    if (!existe) {
+      const copia = {
+        ...gasto,
+        id: newId('g'),
+        periodo: proxPeriodo,
+        monto: 0,
+        fecha: new Date().toISOString().slice(0, 10),
+        creado_en: new Date().toISOString(),
+      };
+      delete copia.recurrente;
+      updateCache('gastos', copia);
+      api.post('/gastos', copia).catch(console.error);
+    }
+  }
+}
+
 export const db = {
   // Edificios
   getEdificios: () => cache.edificios || [],
@@ -77,11 +110,13 @@ export const db = {
     const record = { ...e }; bump();
     updateCache('edificios', record);
     api.post('/edificios', record).catch(console.error);
+    toast('Edificio guardado');
     return record;
   },
   deleteEdificio: (id) => {
     cache.edificios = cache.edificios.map(e => e.id === id ? { ...e, activo: 0 } : e); bump();
     api.del(`/edificios/${id}`).catch(console.error);
+    toast('Edificio eliminado');
   },
 
   // Departamentos
@@ -90,11 +125,13 @@ export const db = {
     const record = { ...d }; bump();
     updateCache('departamentos', record);
     api.post('/departamentos', record).catch(console.error);
+    toast(d.id ? 'Departamento actualizado' : 'Departamento creado');
     return record;
   },
   deleteDepartamento: (id) => {
     cache.departamentos = cache.departamentos.map(d => d.id === id ? { ...d, activo: 0 } : d); bump();
     api.del(`/departamentos/${id}`).catch(console.error);
+    toast('Departamento eliminado');
   },
 
   // Personas
@@ -103,11 +140,13 @@ export const db = {
     const record = { ...p }; bump();
     updateCache('personas', record);
     api.post('/personas', record).catch(console.error);
+    toast('Persona guardada');
     return record;
   },
   deletePersona: (id) => {
     cache.personas = cache.personas.map(p => p.id === id ? { ...p, activo: 0 } : p); bump();
     api.del(`/personas/${id}`).catch(console.error);
+    toast('Persona eliminada');
   },
 
   // Propietarios
@@ -116,6 +155,7 @@ export const db = {
     const record = { ...r }; bump();
     updateCache('propietarios', record);
     api.post('/propietarios', record).catch(console.error);
+    toast('Propietario asignado');
     return record;
   },
   removePropietario: (deptoId, personaId) => {
@@ -123,6 +163,7 @@ export const db = {
       r.departamento_id === deptoId && r.persona_id === personaId ? { ...r, activo: 0 } : r
     ); bump();
     api.del(`/propietarios?departamento_id=${deptoId}&persona_id=${personaId}`).catch(console.error);
+    toast('Propietario removido');
   },
 
   // Inquilinos
@@ -131,11 +172,13 @@ export const db = {
     const record = { ...r }; bump();
     updateCache('inquilinos', record);
     api.post('/inquilinos', record).catch(console.error);
+    toast('Inquilino asignado');
     return record;
   },
   removeInquilino: (id) => {
     cache.inquilinos = cache.inquilinos.map(r => r.id === id ? { ...r, activo: 0, fecha_hasta: new Date().toISOString().slice(0, 10) } : r); bump();
     api.del(`/inquilinos/${id}`).catch(console.error);
+    toast('Inquilino removido');
   },
 
   // Gastos
@@ -144,11 +187,14 @@ export const db = {
     const record = { ...g }; bump();
     updateCache('gastos', record);
     api.post('/gastos', record).catch(console.error);
+    autoCrearRecurrentes(record);
+    toast(record.monto === 0 ? 'Plantilla de gasto creada' : 'Gasto guardado');
     return record;
   },
   deleteGasto: (id) => {
     removeFromCache('gastos', id); bump();
     api.del(`/gastos/${id}`).catch(console.error);
+    toast('Gasto eliminado');
   },
 
   // Pagos
@@ -157,11 +203,13 @@ export const db = {
     const record = { ...p }; bump();
     updateCache('pagos', record);
     api.post('/pagos', record).catch(console.error);
+    toast('Pago registrado');
     return record;
   },
   deletePago: (id) => {
     removeFromCache('pagos', id); bump();
     api.del(`/pagos/${id}`).catch(console.error);
+    toast('Pago eliminado');
   },
 
   // Liquidaciones
@@ -170,6 +218,7 @@ export const db = {
     const record = { ...l }; bump();
     updateCache('liquidaciones', record);
     api.post('/liquidaciones', record).catch(console.error);
+    toast('Liquidación guardada');
     return record;
   },
 };

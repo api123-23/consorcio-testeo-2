@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
-import { Building2, Users, AlertCircle, CheckCircle2, DollarSign, Calendar } from 'lucide-react';
+import { Building2, Users, AlertCircle, CheckCircle2, DollarSign, Calendar, TrendingUp } from 'lucide-react';
 import { db, getMesActual, formatPeriodo, formatMonto, getEstadoDepartamento, calcularExpensaDepartamento, getPropietariosDeDepartamento, getInquilinoActual, getDepartamentosDeEdificio, getRev } from '../data/db';
+import EvolucionChart from '../components/charts.jsx';
 
 export default function Dashboard({ edificioId }) {
   const data = useMemo(() => {
@@ -92,6 +93,24 @@ export default function Dashboard({ edificioId }) {
           <div className="flex justify-between mt-2">
             <span className="text-xs text-muted">Recaudado: {formatMonto(data.montoRecaudado)}</span>
             <span className="text-xs text-muted">Total: {formatMonto(data.totalGastos)}</span>
+          </div>
+        </div>
+
+        <div className="card">
+          <div className="card-header">
+            <span className="card-title">Evolución últimos 6 meses</span>
+            <TrendingUp size={16} style={{ color: 'var(--text-muted)' }} />
+          </div>
+          <EvolucionChart edificioId={edificioId} />
+          <div className="flex items-center gap-3 mt-2" style={{ justifyContent: 'center' }}>
+            <div className="flex items-center gap-1 text-xs text-muted">
+              <span style={{ width: 10, height: 10, borderRadius: 2, background: 'var(--accent)', opacity: 0.7, display: 'inline-block' }} />
+              Gastos
+            </div>
+            <div className="flex items-center gap-1 text-xs text-muted">
+              <span style={{ width: 10, height: 10, borderRadius: 2, background: 'var(--success)', opacity: 0.85, display: 'inline-block' }} />
+              Recaudado
+            </div>
           </div>
         </div>
 

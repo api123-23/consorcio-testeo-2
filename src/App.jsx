@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import './App.css';
 import { db, loadData, newId, getMesActual } from './data/db';
+import { useToastState } from './components/toast';
+import EvolucionChart from './components/charts.jsx';
 import Dashboard from './pages/Dashboard';
 import Departamentos from './pages/Departamentos';
 import Personas from './pages/Personas';
@@ -374,6 +376,7 @@ export default function App() {
 
   const config = db.getEdificios().find(e => e.id === edificioId) || {};
   const PageComponent = PAGES[page] || Dashboard;
+  const toasts = useToastState();
 
   const grupos = ['principal', 'gestion', 'operaciones'];
   const grupoLabels = { principal: null, gestion: 'Gestión', operaciones: 'Operaciones' };
@@ -468,6 +471,14 @@ export default function App() {
           </div>
         </div>
       )}
+
+      <div className="toast-container">
+        {toasts.map(t => (
+          <div key={t.id} className={`toast toast-${t.type}`}>
+            {t.message}
+          </div>
+        ))}
+      </div>
     </>
   );
 }
