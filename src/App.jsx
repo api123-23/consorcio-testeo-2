@@ -25,6 +25,8 @@ import {
   AlertCircle,
   Moon,
   Sun,
+  ArrowRight,
+  Sparkles,
 } from 'lucide-react';
 
 const NAV = [
@@ -312,6 +314,13 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [edificioId, setEdificioId] = useState(null);
   const [periodo, setPeriodo] = useState(getMesActual());
+  const [showWelcome, setShowWelcome] = useState(true);
+  const [welcomeHiding, setWelcomeHiding] = useState(false);
+
+  const handleWelcomeContinue = () => {
+    setWelcomeHiding(true);
+    setTimeout(() => setShowWelcome(false), 500);
+  };
 
   useEffect(() => {
     const saved = localStorage.getItem('theme');
@@ -375,62 +384,90 @@ export default function App() {
   };
 
   return (
-    <div className="app-shell">
-      {sidebarOpen && <div className="mobile-overlay" onClick={() => setSidebarOpen(false)} />}
+    <>
+      <div className="app-shell">
+        {sidebarOpen && <div className="mobile-overlay" onClick={() => setSidebarOpen(false)} />}
 
-      <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
-        <div className="sidebar-logo">
-          <h1>Consorcio</h1>
-          <BuildingSelector edificioId={edificioId} onSelect={handleBuildingChange} />
+        <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
+          <div className="sidebar-logo">
+            <h1>Concorcio</h1>
+            <BuildingSelector edificioId={edificioId} onSelect={handleBuildingChange} />
+          </div>
+
+          <nav className="sidebar-nav">
+            {grupos.map(grupo => {
+              const items = NAV.filter(n => n.group === grupo);
+              return (
+                <div key={grupo} className="nav-section">
+                  {grupoLabels[grupo] && <div className="nav-label">{grupoLabels[grupo]}</div>}
+                  {items.map(item => (
+                    <button key={item.id}
+                      className={`nav-item ${page === item.id ? 'active' : ''}`}
+                      onClick={() => handleNav(item.id)}>
+                      <item.icon size={15} />
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
+              );
+            })}
+          </nav>
+
+          <div className="sidebar-footer">
+            <button className="nav-item" onClick={() => setShowSettings(true)}>
+              <Settings size={15} />
+              Configuración
+            </button>
+          </div>
+        </aside>
+
+        <main className="main-content">
+          <div className="mobile-topbar" id="mobile-topbar">
+            <button className="btn-icon" onClick={() => setSidebarOpen(true)}>
+              <Menu size={18} />
+            </button>
+            <span className="mobile-title">
+              {NAV.find(n => n.id === page)?.label || 'Concorcio'}
+            </span>
+            <span className="mobile-building">{config.nombre || ''}</span>
+          </div>
+
+          <PageComponent key={`${page}-${edificioId}`} edificioId={edificioId} periodo={periodo} setPeriodo={setPeriodo} />
+        </main>
+
+        {showSettings && (
+          <SettingsModal
+            edificioId={edificioId}
+            onClose={() => setShowSettings(false)}
+          />
+        )}
+      </div>
+
+      {showWelcome && (
+        <div className={`welcome-overlay ${welcomeHiding ? 'welcome-hiding' : ''}`}>
+          <div className="welcome-bg">
+            <div className="welcome-circle welcome-circle-1" />
+            <div className="welcome-circle welcome-circle-2" />
+            <div className="welcome-circle welcome-circle-3" />
+          </div>
+          <div className="welcome-content">
+            <div className="welcome-icon-wrap">
+              <Sparkles size={28} className="welcome-sparkle" />
+              <Building2 size={48} className="welcome-building" />
+            </div>
+            <h1 className="welcome-title">Concorcio</h1>
+            <p className="welcome-subtitle">Gestión simple de consorcios</p>
+            <p className="welcome-desc">
+              Administrá edificios, departamentos, gastos y cobranzas<br />
+              de forma clara y eficiente.
+            </p>
+            <button className="welcome-btn" onClick={handleWelcomeContinue}>
+              <span>Continuar</span>
+              <ArrowRight size={18} className="welcome-btn-arrow" />
+            </button>
+          </div>
         </div>
-
-        <nav className="sidebar-nav">
-          {grupos.map(grupo => {
-            const items = NAV.filter(n => n.group === grupo);
-            return (
-              <div key={grupo} className="nav-section">
-                {grupoLabels[grupo] && <div className="nav-label">{grupoLabels[grupo]}</div>}
-                {items.map(item => (
-                  <button key={item.id}
-                    className={`nav-item ${page === item.id ? 'active' : ''}`}
-                    onClick={() => handleNav(item.id)}>
-                    <item.icon size={15} />
-                    {item.label}
-                  </button>
-                ))}
-              </div>
-            );
-          })}
-        </nav>
-
-        <div className="sidebar-footer">
-          <button className="nav-item" onClick={() => setShowSettings(true)}>
-            <Settings size={15} />
-            Configuración
-          </button>
-        </div>
-      </aside>
-
-      <main className="main-content">
-        <div className="mobile-topbar" id="mobile-topbar">
-          <button className="btn-icon" onClick={() => setSidebarOpen(true)}>
-            <Menu size={18} />
-          </button>
-          <span className="mobile-title">
-            {NAV.find(n => n.id === page)?.label || 'Consorcio'}
-          </span>
-          <span className="mobile-building">{config.nombre || ''}</span>
-        </div>
-
-        <PageComponent key={`${page}-${edificioId}`} edificioId={edificioId} periodo={periodo} setPeriodo={setPeriodo} />
-      </main>
-
-      {showSettings && (
-        <SettingsModal
-          edificioId={edificioId}
-          onClose={() => setShowSettings(false)}
-        />
       )}
-    </div>
+    </>
   );
 }

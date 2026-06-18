@@ -526,6 +526,127 @@ tr:focus-within td { background: var(--accent-subtle); }
 .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
 .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
 
+/* Welcome screen */
+.welcome-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--bg);
+  animation: welcomeFadeIn 0.6s ease;
+  overflow: hidden;
+}
+.welcome-overlay.welcome-hiding {
+  animation: welcomeFadeOut 0.5s ease forwards;
+}
+@keyframes welcomeFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes welcomeFadeOut {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(1.04); }
+}
+
+.welcome-bg {
+  position: absolute; inset: 0;
+  overflow: hidden; pointer-events: none;
+}
+.welcome-circle {
+  position: absolute; border-radius: 50%;
+  background: var(--accent); opacity: 0.04;
+}
+.welcome-circle-1 {
+  width: 600px; height: 600px; top: -200px; right: -150px;
+  animation: welcomeFloat 8s ease-in-out infinite;
+}
+.welcome-circle-2 {
+  width: 400px; height: 400px; bottom: -100px; left: -100px;
+  animation: welcomeFloat 10s ease-in-out infinite reverse;
+}
+.welcome-circle-3 {
+  width: 200px; height: 200px; top: 40%; right: 20%;
+  animation: welcomeFloat 6s ease-in-out infinite 1s;
+}
+@keyframes welcomeFloat {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(20px, -20px); }
+}
+
+.welcome-content {
+  position: relative; z-index: 1;
+  text-align: center; display: flex; flex-direction: column;
+  align-items: center; gap: 12px; padding: 20px;
+}
+
+.welcome-icon-wrap {
+  position: relative; display: inline-flex; align-items: center;
+  justify-content: center; margin-bottom: 8px;
+  animation: welcomeSlideUp 0.7s ease 0.1s both;
+}
+.welcome-building {
+  color: var(--accent); animation: welcomePulse 3s ease-in-out infinite;
+}
+.welcome-sparkle {
+  position: absolute; top: -12px; right: -16px;
+  color: var(--warning); animation: welcomeSpin 4s linear infinite;
+}
+@keyframes welcomeSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+@keyframes welcomePulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.06); opacity: 0.8; }
+}
+
+.welcome-title {
+  font-size: 42px; font-weight: 700; letter-spacing: -0.03em;
+  background: linear-gradient(135deg, var(--accent), #7C82E8);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: welcomeSlideUp 0.7s ease 0.2s both;
+}
+.welcome-subtitle {
+  font-size: 16px; color: var(--text-secondary); font-weight: 500;
+  animation: welcomeSlideUp 0.7s ease 0.35s both;
+}
+.welcome-desc {
+  font-size: 14px; color: var(--text-muted); line-height: 1.6;
+  animation: welcomeSlideUp 0.7s ease 0.5s both;
+}
+.welcome-btn {
+  margin-top: 16px; display: inline-flex; align-items: center; gap: 10px;
+  padding: 14px 32px; border-radius: 12px; border: none;
+  font-size: 15px; font-weight: 600; color: white;
+  background: linear-gradient(135deg, var(--accent), #5C61C9);
+  cursor: pointer; position: relative; overflow: hidden;
+  transition: all 0.3s ease;
+  animation: welcomeSlideUp 0.7s ease 0.65s both;
+  box-shadow: 0 4px 20px rgba(var(--accent-rgb), 0.3);
+}
+.welcome-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(var(--accent-rgb), 0.4);
+}
+.welcome-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 10px rgba(var(--accent-rgb), 0.2);
+}
+.welcome-btn-arrow {
+  transition: transform 0.3s ease;
+}
+.welcome-btn:hover .welcome-btn-arrow {
+  transform: translateX(4px);
+}
+.welcome-btn::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.12) 100%);
+  pointer-events: none;
+}
+@keyframes welcomeSlideUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 /* Print */
 @media print {
   .sidebar, .page-header, .btn, .btn-icon, .no-print, .search-bar { display: none !important; }
