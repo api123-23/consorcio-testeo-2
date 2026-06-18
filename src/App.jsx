@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from 'react';
 import './App.css';
 import { db, loadData, newId, getMesActual } from './data/db';
 import { useToastState } from './components/toast';
-import EvolucionChart from './components/charts.jsx';
 import Dashboard from './pages/Dashboard';
 import Departamentos from './pages/Departamentos';
 import Personas from './pages/Personas';
@@ -180,6 +179,8 @@ function SettingsModal({ edificioId, onClose }) {
     const theme = next ? 'dark' : 'light';
     localStorage.setItem('theme', theme);
     document.documentElement.setAttribute('data-theme', theme);
+    const meta = document.getElementById('theme-color');
+    if (meta) meta.setAttribute('content', next ? '#111318' : '#F4F5F7');
   };
 
   const errors = {};
@@ -314,6 +315,7 @@ export default function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [showNewBuilding, setShowNewBuilding] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
   const [edificioId, setEdificioId] = useState(null);
   const [periodo, setPeriodo] = useState(getMesActual());
   const [showWelcome, setShowWelcome] = useState(true);
@@ -328,6 +330,8 @@ export default function App() {
     const saved = localStorage.getItem('theme');
     if (saved) {
       document.documentElement.setAttribute('data-theme', saved);
+      const meta = document.getElementById('theme-color');
+      if (meta) meta.setAttribute('content', saved === 'dark' ? '#111318' : '#F4F5F7');
     }
   }, []);
 
@@ -338,6 +342,10 @@ export default function App() {
         setEdificioId(edificios[0].id);
       }
       setLoading(false);
+    }).catch((err) => {
+      console.error('Error loading data:', err);
+      setLoadError(err.message || 'Error de conexión con el servidor');
+      setLoading(false);
     });
   }, []);
 
@@ -345,6 +353,18 @@ export default function App() {
     setEdificioId(id);
     setPage('dashboard');
   }, []);
+
+  if (loadError) {
+    return (
+      <div className="empty-buildings" style={{ gap: '12px' }}>
+        <AlertCircle size={40} style={{ color: 'var(--danger)' }} />
+        <h2>Error de conexión</h2>
+        <p style={{ maxWidth: 400, textAlign: 'center' }}>No se pudo cargar la información del servidor. Revisá que el backend esté corriendo.</p>
+        <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>{loadError}</p>
+        <button className="btn btn-primary" onClick={() => window.location.reload()}>Reintentar</button>
+      </div>
+    );
+  }
 
   if (loading) {
     return (

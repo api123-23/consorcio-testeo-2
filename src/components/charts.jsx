@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { db, formatMonto, getDepartamentosDeEdificio, calcularExpensaDepartamento, getRev } from '../data/db';
+import { db, formatMonto, getDepartamentosDeEdificio, getRev } from '../data/db';
 
 function getPeriodos(cantidad) {
   const hoy = new Date();
