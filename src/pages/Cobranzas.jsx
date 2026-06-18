@@ -33,6 +33,7 @@ export default function Cobranzas({ edificioId, periodo, setPeriodo }) {
   );
 
   const pagados = estadoUnidades.filter(e => e.estado === 'al_dia').length;
+  const parciales = estadoUnidades.filter(e => e.estado === 'parcial').length;
   const deudores = estadoUnidades.filter(e => e.estado === 'deudor').length;
   const totalRecaudado = estadoUnidades.filter(e => e.pago).reduce((s, e) => s + e.pago.monto, 0);
 
@@ -79,13 +80,18 @@ export default function Cobranzas({ edificioId, periodo, setPeriodo }) {
             <div className="stat-sub">unidades</div>
           </div>
           <div className="stat-card">
+            <div className="stat-label">Parciales</div>
+            <div className="stat-value" style={{ color: 'var(--warning)' }}>{parciales}</div>
+            <div className="stat-sub">unidades</div>
+          </div>
+          <div className="stat-card">
             <div className="stat-label">Deben</div>
             <div className="stat-value" style={{ color: 'var(--danger)' }}>{deudores}</div>
             <div className="stat-sub">unidades</div>
           </div>
           <div className="stat-card">
             <div className="stat-label">Cobertura</div>
-            <div className="stat-value">{estadoUnidades.length > 0 ? Math.round((pagados / estadoUnidades.length) * 100) : 0}%</div>
+            <div className="stat-value">{estadoUnidades.length > 0 ? Math.round(((pagados + parciales) / estadoUnidades.length) * 100) : 0}%</div>
           </div>
         </div>
 
@@ -112,8 +118,8 @@ export default function Cobranzas({ edificioId, periodo, setPeriodo }) {
                   <td className="text-muted">{e.inquilino ? e.inquilino.nombre.split(' ')[0] : <span className="text-xs">Prop.</span>}</td>
                   <td className="font-medium">{formatMonto(e.expensa)}</td>
                   <td>
-                    <span className={`badge ${e.estado === 'al_dia' ? 'badge-success' : 'badge-danger'}`}>
-                      {e.estado === 'al_dia' ? 'Pagó' : 'Debe'}
+                    <span className={`badge ${e.estado === 'al_dia' ? 'badge-success' : e.estado === 'parcial' ? 'badge-warning' : 'badge-danger'}`}>
+                      {e.estado === 'al_dia' ? 'Pagó' : e.estado === 'parcial' ? 'Parcial' : 'Debe'}
                     </span>
                   </td>
                   <td>
@@ -129,10 +135,10 @@ export default function Cobranzas({ edificioId, periodo, setPeriodo }) {
                     )}
                   </td>
                   <td>
-                    {e.estado === 'deudor' ? (
+                    {e.estado === 'deudor' || e.estado === 'parcial' ? (
                       <button className="btn btn-success btn-sm"
                         onClick={() => { setEditPago(null); setShowForm(true); setPreselectDeptoId(e.departamento.id); }}>
-                        Registrar pago
+                        {e.estado === 'parcial' ? 'Completar pago' : 'Registrar pago'}
                       </button>
                     ) : e.pago && (
                       <div className="flex gap-2">
@@ -186,6 +192,12 @@ function CobranzaForm({ edificioId, periodo, preselectDeptoId, onSave, onClose }
   });
 
   const expensaCalculada = selectedDepto ? calcularExpensaDepartamento(selectedDepto, periodo) : 0;
+  const pagosExistentes = useMemo(() => {
+    if (!selectedDepto) return [];
+    return db.getPagos().filter(p => p.departamento_id === selectedDepto.id && p.periodo === periodo);
+  }, [selectedDepto, periodo, getRev()]);
+  const totalPagado = pagosExistentes.reduce((s, p) => s + p.monto, 0);
+  const restante = Math.max(0, expensaCalculada - totalPagado);
 
   // Auto-select if preselectDeptoId is provided
   useEffect(() => {
@@ -198,16 +210,24 @@ function CobranzaForm({ edificioId, periodo, preselectDeptoId, onSave, onClose }
   const handleDeptoSelect = (d) => {
     setSelectedDepto(d);
     const expensa = calcularExpensaDepartamento(d, periodo);
-    setForm(f => ({ ...f, departamento_id: d.id, monto: expensa }));
+    const pagado = db.getPagos().filter(p => p.departamento_id === d.id && p.periodo === periodo)
+      .reduce((s, p) => s + p.monto, 0);
+    setForm(f => ({ ...f, departamento_id: d.id, monto: Math.max(0, expensa - pagado) }));
   };
 
   const handlePagoTotal = () => {
-    setForm(f => ({ ...f, monto: expensaCalculada }));
+    setForm(f => ({ ...f, monto: restante }));
   };
 
   const errors = {};
   if (!form.departamento_id) errors.departamento_id = 'Seleccioná un departamento';
   if (!form.monto || form.monto <= 0) errors.monto = 'Monto inválido';
+
+  // Valida que el monto no supere lo que resta pagar
+  if (selectedDepto && form.monto > 0 && Number(form.monto) > restante && pagosExistentes.length > 0) {
+    errors.monto = `Solo resta pagar ${formatMonto(restante)}`;
+  }
+
   if (!form.fecha_pago) errors.fecha_pago = 'Requerido';
 
   const handleSubmit = () => {
@@ -251,11 +271,16 @@ function CobranzaForm({ edificioId, periodo, preselectDeptoId, onSave, onClose }
               </div>
               <div className="form-group">
                 <label className="form-label">Monto</label>
+                {pagosExistentes.length > 0 && (
+                  <div className="text-xs text-muted" style={{ marginBottom: 4 }}>
+                    Pagado: {formatMonto(totalPagado)} — Resta: {formatMonto(restante)}
+                  </div>
+                )}
                 <div className="monto-input-wrap">
                   <input className={`form-input ${errors.monto ? 'error' : ''}`} type="number"
                     value={form.monto} onChange={e => setForm(f => ({ ...f, monto: e.target.value }))} />
                   <button className="btn btn-sm btn-secondary monto-total-btn" onClick={handlePagoTotal}
-                    title={`Completar con ${formatMonto(expensaCalculada)}`}>
+                    title={`Completar con ${formatMonto(restante)}`}>
                     Pago total
                   </button>
                 </div>

@@ -21,7 +21,8 @@ export default function Departamentos({ edificioId }) {
   );
 
   const alDia = filtrados.filter(d => getEstadoDepartamento(d.id, periodo) === 'al_dia').length;
-  const deudores = filtrados.length - alDia;
+  const parciales = filtrados.filter(d => getEstadoDepartamento(d.id, periodo) === 'parcial').length;
+  const deudores = filtrados.length - alDia - parciales;
 
   const handleSave = (data) => {
     const record = editing ? { ...editing, ...data } : { ...data, activo: 1 };
@@ -40,7 +41,7 @@ export default function Departamentos({ edificioId }) {
       <div className="page-header">
         <div>
           <h2>Departamentos</h2>
-          <p>{activos.length} unidades · {alDia} al día · {deudores} deudores</p>
+          <p>{activos.length} unidades · {alDia} al día{parciales > 0 ? ` · ${parciales} parcial` : ''} · {deudores} deudores</p>
         </div>
         <div className="flex items-center gap-2">
           <div className="search-bar">
@@ -63,6 +64,10 @@ export default function Departamentos({ edificioId }) {
             <div className="stat-label">Al día</div>
             <div className="stat-value" style={{ color: 'var(--success)' }}>{alDia}</div>
             <div className="stat-sub">{activos.length > 0 ? Math.round((alDia / activos.length) * 100) : 0}%</div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-label">Parciales</div>
+            <div className="stat-value" style={{ color: 'var(--warning)' }}>{parciales}</div>
           </div>
           <div className="stat-card">
             <div className="stat-label">Deudores</div>
@@ -106,8 +111,8 @@ export default function Departamentos({ edificioId }) {
                     <td>{d.porcentaje}%</td>
                     <td className="font-medium">{formatMonto(expensa)}</td>
                     <td>
-                      <span className={`badge ${estado === 'al_dia' ? 'badge-success' : 'badge-danger'}`}>
-                        {estado === 'al_dia' ? 'Al día' : 'Deudor'}
+                      <span className={`badge ${estado === 'al_dia' ? 'badge-success' : estado === 'parcial' ? 'badge-warning' : 'badge-danger'}`}>
+                        {estado === 'al_dia' ? 'Al día' : estado === 'parcial' ? 'Parcial' : 'Deudor'}
                       </span>
                     </td>
                     <td>
@@ -209,8 +214,8 @@ function PersonSearch({ onSelect, onClose }) {
                 </div>
                 <div className="form-group">
                   <label className="form-label">Teléfono</label>
-                  <input className={`form-input ${newErrors.telefono ? 'error' : ''}`} value={newTel} onChange={e => setNewTel(e.target.value)}
-                    placeholder="Ej: 351-4567890" />
+                  <input className={`form-input ${newErrors.telefono ? 'error' : ''}`} value={newTel} onChange={e => setNewTel(e.target.value.replace(/\D/g, '').slice(0, 15))}
+                    placeholder="Ej: 3514567890" maxLength={15} />
                   {newErrors.telefono && <div className="error-msg"><AlertCircle size={12} /> El teléfono es requerido</div>}
                 </div>
               </div>

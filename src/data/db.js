@@ -261,8 +261,15 @@ export const calcularExpensaDepartamento = (departamento, periodo) => {
 };
 
 export const getEstadoDepartamento = (departamento_id, periodo) => {
-  const pago = cache.pagos.find(p => p.departamento_id === departamento_id && p.periodo === periodo);
-  return pago ? 'al_dia' : 'deudor';
+  const pagos = cache.pagos.filter(p => p.departamento_id === departamento_id && p.periodo === periodo);
+  if (pagos.length === 0) return 'deudor';
+  const totalPagado = pagos.reduce((s, p) => s + p.monto, 0);
+  const depto = cache.departamentos.find(d => d.id === departamento_id);
+  if (depto) {
+    const expensa = calcularExpensaDepartamento(depto, periodo);
+    if (totalPagado < expensa) return 'parcial';
+  }
+  return 'al_dia';
 };
 
 export const getPeriodosDeuda = (departamento_id) => {

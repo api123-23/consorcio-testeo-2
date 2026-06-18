@@ -52,7 +52,7 @@ export default function Reportes({ edificioId, periodo: periodoSeleccionado, set
       };
     });
 
-    const recaudado = filas.filter(f => f.estado === 'al_dia').reduce((s, f) => s + f.expensa, 0);
+    const recaudado = filas.reduce((s, f) => s + f.montoPagado, 0);
 
     return { gastos, pagos, filas, totalGastos, recaudado };
   }, [periodoSeleccionado, edificioId, getRev()]);
@@ -130,7 +130,7 @@ export default function Reportes({ edificioId, periodo: periodoSeleccionado, set
           <div className="stat-card">
             <div className="stat-label">Recaudado</div>
             <div className="stat-value" style={{ fontSize: 18, color: 'var(--success)' }}>{formatMonto(data.recaudado)}</div>
-            <div className="stat-sub">{data.filas.filter(f => f.estado === 'al_dia').length} unidades</div>
+            <div className="stat-sub">{data.filas.filter(f => f.estado !== 'deudor').length} unidades</div>
           </div>
           <div className="stat-card">
             <div className="stat-label">Diferencia</div>

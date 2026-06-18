@@ -16,10 +16,15 @@ export default function Dashboard({ edificioId }) {
     const gastosOrdinarios = gastos.filter(g => g.tipo === 'ordinario').reduce((s, g) => s + g.monto, 0);
     const gastosExtra = gastos.filter(g => g.tipo === 'extraordinario').reduce((s, g) => s + g.monto, 0);
 
-    let pagados = 0, deudores = 0, montoRecaudado = 0;
+    let pagados = 0, parciales = 0, deudores = 0, montoRecaudado = 0;
     departamentos.forEach(d => {
       const estado = getEstadoDepartamento(d.id, periodo);
       if (estado === 'al_dia') { pagados++; montoRecaudado += calcularExpensaDepartamento(d, periodo); }
+      else if (estado === 'parcial') {
+        parciales++;
+        const pago = db.getPagos().find(p => p.departamento_id === d.id && p.periodo === periodo);
+        if (pago) montoRecaudado += pago.monto;
+      }
       else deudores++;
     });
 
@@ -55,6 +60,7 @@ export default function Dashboard({ edificioId }) {
             <div className="stat-value">{data.departamentos.length}</div>
             <div className="stat-sub flex items-center gap-2">
               <span style={{ color: 'var(--success)' }}>{data.pagados} al día</span>
+              {data.parciales > 0 && <><span>·</span><span style={{ color: 'var(--warning)' }}>{data.parciales} parcial</span></>}
               <span>·</span>
               <span style={{ color: 'var(--danger)' }}>{data.deudores} deudores</span>
             </div>
@@ -126,19 +132,21 @@ export default function Dashboard({ edificioId }) {
                 const props = getPropietariosDeDepartamento(d.id);
                 const inq = getInquilinoActual(d.id);
                 return (
-                  <div key={d.id} className="list-row">
-                    <div className="flex items-center gap-2">
-                      {estado === 'al_dia'
-                        ? <CheckCircle2 size={14} style={{ color: 'var(--success)' }} />
-                        : <AlertCircle size={14} style={{ color: 'var(--danger)' }} />}
-                      <span className="font-medium">Unidad {d.numero}</span>
-                      <span className="text-xs text-muted">{props[0]?.nombre?.split(' ')[0] || ''}</span>
-                      {inq && <span className="badge badge-info" style={{ fontSize: 10 }}>Inq.</span>}
+                    <div key={d.id} className="list-row">
+                      <div className="flex items-center gap-2">
+                        {estado === 'al_dia'
+                          ? <CheckCircle2 size={14} style={{ color: 'var(--success)' }} />
+                          : estado === 'parcial'
+                          ? <AlertCircle size={14} style={{ color: 'var(--warning)' }} />
+                          : <AlertCircle size={14} style={{ color: 'var(--danger)' }} />}
+                        <span className="font-medium">Unidad {d.numero}</span>
+                        <span className="text-xs text-muted">{props[0]?.nombre?.split(' ')[0] || ''}</span>
+                        {inq && <span className="badge badge-info" style={{ fontSize: 10 }}>Inq.</span>}
+                      </div>
+                      <span className={`badge ${estado === 'al_dia' ? 'badge-success' : estado === 'parcial' ? 'badge-warning' : 'badge-danger'}`}>
+                        {estado === 'al_dia' ? 'Al día' : estado === 'parcial' ? 'Parcial' : 'Deudor'}
+                      </span>
                     </div>
-                    <span className={`badge ${estado === 'al_dia' ? 'badge-success' : 'badge-danger'}`}>
-                      {estado === 'al_dia' ? 'Al día' : 'Deudor'}
-                    </span>
-                  </div>
                 );
               })}
             </div>

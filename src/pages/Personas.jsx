@@ -207,8 +207,8 @@ function PersonaForm({ editing, onSave, onClose }) {
           <div className="form-group">
             <label className="form-label">Teléfono</label>
             <input className={`form-input ${errors.telefono ? 'error' : ''}`} value={form.telefono}
-              onChange={e => setForm(f => ({ ...f, telefono: e.target.value }))}
-              placeholder="Ej: 351-4567890" maxLength={30} />
+              onChange={e => setForm(f => ({ ...f, telefono: e.target.value.replace(/\D/g, '').slice(0, 15) }))}
+              placeholder="Ej: 3514567890" maxLength={15} />
             {errors.telefono && <div className="error-msg"><AlertCircle size={12} /> {errors.telefono}</div>}
           </div>
         </div>

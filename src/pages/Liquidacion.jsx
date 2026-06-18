@@ -144,6 +144,8 @@ export default function Liquidacion({ edificioId, periodo, setPeriodo }) {
                     <td>
                       {f.estado === 'al_dia'
                         ? <CheckCircle2 size={16} style={{ color: 'var(--success)' }} />
+                        : f.estado === 'parcial'
+                        ? <span className="badge badge-warning">Parcial</span>
                         : <span className="badge badge-danger">Debe</span>}
                     </td>
                   </tr>
