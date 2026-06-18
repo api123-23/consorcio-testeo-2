@@ -11,6 +11,7 @@
   --text-secondary: #5A5F69;
   --text-muted: #9CA0A8;
   --accent: #3B3F8C;
+  --accent-rgb: 59, 63, 140;
   --accent-hover: #2E326E;
   --accent-light: #EDEDF8;
   --accent-subtle: #F8F8FD;
@@ -27,6 +28,41 @@
   --shadow: 0 1px 3px rgba(26,29,36,0.06), 0 1px 2px rgba(26,29,36,0.04);
   --shadow-md: 0 4px 12px rgba(26,29,36,0.06), 0 2px 4px rgba(26,29,36,0.04);
   --shadow-lg: 0 12px 32px rgba(26,29,36,0.08), 0 4px 12px rgba(26,29,36,0.04);
+}
+
+[data-theme="dark"] {
+  --bg: #111318;
+  --surface: #1A1C23;
+  --surface-2: #22242B;
+  --surface-3: #2A2C34;
+  --border: #2E303A;
+  --border-strong: #3A3D48;
+  --text-primary: #E4E5E9;
+  --text-secondary: #9CA0AC;
+  --text-muted: #686C78;
+  --accent: #5C61C9;
+  --accent-rgb: 92, 97, 201;
+  --accent-hover: #6E73D4;
+  --accent-light: #2A2D4A;
+  --accent-subtle: #1E2040;
+  --success: #1EA86A;
+  --success-light: #1A2E24;
+  --danger: #E05353;
+  --danger-light: #2E1C1C;
+  --warning: #D4A830;
+  --warning-light: #2E2618;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.2);
+  --shadow: 0 1px 3px rgba(0,0,0,0.25);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.3);
+  --shadow-lg: 0 12px 32px rgba(0,0,0,0.35);
+}
+
+[data-theme="dark"] .modal-overlay {
+  background: rgba(0,0,0,0.7);
+}
+
+[data-theme="dark"] .mobile-overlay {
+  background: rgba(0,0,0,0.6);
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -259,11 +295,11 @@ tr:focus-within td { background: var(--accent-subtle); }
 }
 .btn-primary {
   background: var(--accent); color: white; border-color: var(--accent);
-  box-shadow: 0 1px 2px rgba(59,63,140,0.15);
+  box-shadow: 0 1px 2px rgba(var(--accent-rgb), 0.15);
 }
 .btn-primary:hover {
   background: var(--accent-hover); border-color: var(--accent-hover);
-  box-shadow: 0 2px 4px rgba(59,63,140,0.2);
+  box-shadow: 0 2px 4px rgba(var(--accent-rgb), 0.2);
   transform: translateY(-1px);
 }
 .btn-primary:active { transform: translateY(0); box-shadow: none; }
@@ -291,7 +327,7 @@ tr:focus-within td { background: var(--accent-subtle); }
   background: var(--surface); outline: none;
   transition: all 0.15s ease;
 }
-.form-input:focus, .form-select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59,63,140,0.08); }
+.form-input:focus, .form-select:focus { border-color: var(--accent);   box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.08); }
 .form-input.error, .form-select.error { border-color: var(--danger); }
 .form-input.error:focus { box-shadow: 0 0 0 3px rgba(197,48,48,0.1); }
 .form-input:disabled { background: var(--surface-2); color: var(--text-muted); }
@@ -345,7 +381,7 @@ tr:focus-within td { background: var(--accent-subtle); }
   background: var(--surface); color: var(--text-primary); width: 200px;
   transition: all 0.2s ease;
 }
-.search-bar input:focus { border-color: var(--accent); width: 240px; box-shadow: 0 0 0 3px rgba(59,63,140,0.08); }
+.search-bar input:focus { border-color: var(--accent); width: 240px;   box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.08); }
 .search-bar input::placeholder { color: var(--text-muted); }
 
 /* Empty state */
@@ -361,6 +397,26 @@ tr:focus-within td { background: var(--accent-subtle); }
 .alert-success { background: var(--success-light); color: var(--success); }
 .alert-danger { background: var(--danger-light); color: var(--danger); }
 .alert-warning { background: var(--warning-light); color: var(--warning); }
+
+/* Theme toggle */
+.theme-toggle {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 0; border-top: 1px solid var(--border); margin-top: 8px;
+}
+.theme-toggle-label { font-size: 12px; font-weight: 600; color: var(--text-secondary); letter-spacing: 0.02em; }
+.toggle-switch {
+  position: relative; width: 44px; height: 24px; flex-shrink: 0;
+  background: var(--surface-2); border-radius: 12px; border: 1px solid var(--border);
+  cursor: pointer; transition: all 0.2s ease;
+}
+.toggle-switch:hover { border-color: var(--border-strong); }
+.toggle-switch.active { background: var(--accent); border-color: var(--accent); }
+.toggle-knob {
+  position: absolute; top: 2px; left: 2px; width: 18px; height: 18px;
+  background: var(--surface); border-radius: 50%; transition: transform 0.2s ease;
+  box-shadow: var(--shadow-sm);
+}
+.toggle-switch.active .toggle-knob { transform: translateX(20px); background: white; }
 
 /* Separator */
 .separator { height: 1px; background: linear-gradient(to right, var(--border), transparent); margin: 20px 0; }

@@ -1,6 +1,6 @@
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import { Download, FileText, BarChart2 } from 'lucide-react';
-import { db, getMesActual, formatMonto, formatPeriodo, calcularExpensaDepartamento, getEstadoDepartamento, getPropietariosDeDepartamento, getInquilinoActual, getDepartamentosDeEdificio, getRev } from '../data/db';
+import { db, formatMonto, formatPeriodo, calcularExpensaDepartamento, getEstadoDepartamento, getPropietariosDeDepartamento, getInquilinoActual, getDepartamentosDeEdificio, getRev } from '../data/db';
 import PeriodoSelector from '../components/PeriodoSelector';
 
 function exportCSV(filename, rows, headers) {
@@ -16,7 +16,7 @@ function exportCSV(filename, rows, headers) {
   a.click(); URL.revokeObjectURL(url);
 }
 
-export default function Reportes({ edificioId }) {
+export default function Reportes({ edificioId, periodo: periodoSeleccionado, setPeriodo: setPeriodoSeleccionado }) {
   const now = new Date();
   const periodos = [];
   for (let i = 0; i <= 11; i++) {
@@ -24,7 +24,6 @@ export default function Reportes({ edificioId }) {
     const val = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
     periodos.push({ val, label: formatPeriodo(val) });
   }
-  const [periodoSeleccionado, setPeriodoSeleccionado] = useState(getMesActual());
 
   const data = useMemo(() => {
     const departamentos = getDepartamentosDeEdificio(edificioId).filter(d => d.activo);

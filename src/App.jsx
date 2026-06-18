@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import './App.css';
-import { db, loadData, newId } from './data/db';
+import { db, loadData, newId, getMesActual } from './data/db';
 import Dashboard from './pages/Dashboard';
 import Departamentos from './pages/Departamentos';
 import Personas from './pages/Personas';
@@ -23,6 +23,8 @@ import {
   ChevronDown,
   Plus,
   AlertCircle,
+  Moon,
+  Sun,
 } from 'lucide-react';
 
 const NAV = [
@@ -166,6 +168,15 @@ function SettingsModal({ edificioId, onClose }) {
     metros_totales: edificio?.metros_totales || '',
   });
   const [saved, setSaved] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => (localStorage.getItem('theme') || 'light') === 'dark');
+
+  const handleThemeToggle = () => {
+    const next = !darkMode;
+    setDarkMode(next);
+    const theme = next ? 'dark' : 'light';
+    localStorage.setItem('theme', theme);
+    document.documentElement.setAttribute('data-theme', theme);
+  };
 
   const errors = {};
   if (!config.nombre.trim()) errors.nombre = 'Requerido';
@@ -214,6 +225,14 @@ function SettingsModal({ edificioId, onClose }) {
             <input className="form-input" value={config.direccion}
               onChange={e => setConfig(c => ({ ...c, direccion: e.target.value }))}
               placeholder="Ej: Belgrano 1240, Córdoba" />
+          </div>
+          <div className="theme-toggle">
+            <span className="theme-toggle-label">
+              {darkMode ? <><Moon size={14} style={{ marginRight: 6, verticalAlign: -2 }} /> Modo oscuro</> : <><Sun size={14} style={{ marginRight: 6, verticalAlign: -2 }} /> Modo claro</>}
+            </span>
+            <div className={`toggle-switch ${darkMode ? 'active' : ''}`} onClick={handleThemeToggle}>
+              <div className="toggle-knob" />
+            </div>
           </div>
         </div>
         <div className="modal-footer">
@@ -292,6 +311,14 @@ export default function App() {
   const [showNewBuilding, setShowNewBuilding] = useState(false);
   const [loading, setLoading] = useState(true);
   const [edificioId, setEdificioId] = useState(null);
+  const [periodo, setPeriodo] = useState(getMesActual());
+
+  useEffect(() => {
+    const saved = localStorage.getItem('theme');
+    if (saved) {
+      document.documentElement.setAttribute('data-theme', saved);
+    }
+  }, []);
 
   useEffect(() => {
     loadData().then(() => {
@@ -395,7 +422,7 @@ export default function App() {
           <span className="mobile-building">{config.nombre || ''}</span>
         </div>
 
-        <PageComponent key={`${page}-${edificioId}`} edificioId={edificioId} />
+        <PageComponent key={`${page}-${edificioId}`} edificioId={edificioId} periodo={periodo} setPeriodo={setPeriodo} />
       </main>
 
       {showSettings && (

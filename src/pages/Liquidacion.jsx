@@ -1,11 +1,9 @@
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import { FileText, CheckCircle2, Printer } from 'lucide-react';
-import { db, getMesActual, formatMonto, formatPeriodo, calcularExpensaDepartamento, getEstadoDepartamento, getPropietariosDeDepartamento, getInquilinoActual, getDepartamentosDeEdificio, getRev } from '../data/db';
+import { db, formatMonto, formatPeriodo, calcularExpensaDepartamento, getEstadoDepartamento, getPropietariosDeDepartamento, getInquilinoActual, getDepartamentosDeEdificio, getRev } from '../data/db';
 import PeriodoSelector from '../components/PeriodoSelector';
 
-export default function Liquidacion({ edificioId }) {
-  const [periodo, setPeriodo] = useState(getMesActual());
-
+export default function Liquidacion({ edificioId, periodo, setPeriodo }) {
   const data = useMemo(() => {
     const departamentos = getDepartamentosDeEdificio(edificioId).filter(d => d.activo);
     const gastos = db.getGastos().filter(g => g.periodo === periodo && g.edificio_id === edificioId);
@@ -25,8 +23,10 @@ export default function Liquidacion({ edificioId }) {
 
     const totalLiquidado = filas.reduce((s, f) => s + f.expensa, 0);
     const recaudado = filas.filter(f => f.pago).reduce((s, f) => s + f.pago.monto, 0);
+    const aRecaudar = filas.filter(f => f.propietarios.length > 0).reduce((s, f) => s + f.expensa, 0);
+    const pctRecaudadoOcupados = aRecaudar > 0 ? Math.round((recaudado / aRecaudar) * 100) : 0;
 
-    return { gastos, totalGastos, ordinarios, extraordinarios, sumPorcentajes, filas, totalLiquidado, recaudado };
+    return { gastos, totalGastos, ordinarios, extraordinarios, sumPorcentajes, filas, totalLiquidado, recaudado, aRecaudar, pctRecaudadoOcupados };
   }, [periodo, edificioId, getRev()]);
 
   const handlePrint = () => window.print();
@@ -67,6 +67,28 @@ export default function Liquidacion({ edificioId }) {
             <div className="stat-sub">de {formatMonto(data.totalLiquidado)}</div>
           </div>
         </div>
+
+        {data.aRecaudar > 0 && (
+          <div className="card">
+            <div className="card-header">
+              <span className="card-title">Recaudación vs. ocupados</span>
+              <span className={`badge ${data.pctRecaudadoOcupados >= 80 ? 'badge-success' : data.pctRecaudadoOcupados >= 50 ? 'badge-warning' : 'badge-danger'}`}>
+                {data.pctRecaudadoOcupados}%
+              </span>
+            </div>
+            <div className="progress-bar">
+              <div className="progress-fill"
+                style={{
+                  width: `${data.pctRecaudadoOcupados}%`,
+                  background: data.pctRecaudadoOcupados >= 80 ? 'var(--success)' : data.pctRecaudadoOcupados >= 50 ? 'var(--warning)' : 'var(--danger)',
+                }} />
+            </div>
+            <div className="flex justify-between mt-2">
+              <span className="text-xs text-muted">Recaudado: {formatMonto(data.recaudado)}</span>
+              <span className="text-xs text-muted">A recaudar (ocupados): {formatMonto(data.aRecaudar)}</span>
+            </div>
+          </div>
+        )}
 
         <div className="card">
           <div className="card-header">

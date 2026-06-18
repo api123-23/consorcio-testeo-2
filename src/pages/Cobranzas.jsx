@@ -1,11 +1,10 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Plus, Trash2, Search, DollarSign, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
-import { db, newId, getMesActual, formatMonto, formatPeriodo, calcularExpensaDepartamento, getEstadoDepartamento, getPropietariosDeDepartamento, getInquilinoActual, getDepartamentosDeEdificio, getRev } from '../data/db';
+import { db, newId, formatMonto, formatPeriodo, calcularExpensaDepartamento, getEstadoDepartamento, getPropietariosDeDepartamento, getInquilinoActual, getDepartamentosDeEdificio, getRev } from '../data/db';
 import { Modal, ConfirmDialog, EmptyState } from '../components/UI';
 import PeriodoSelector from '../components/PeriodoSelector';
 
-export default function Cobranzas({ edificioId }) {
-  const [periodo, setPeriodo] = useState(getMesActual());
+export default function Cobranzas({ edificioId, periodo, setPeriodo }) {
   const [search, setSearch] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editPago, setEditPago] = useState(null);

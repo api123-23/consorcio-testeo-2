@@ -1,13 +1,12 @@
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { Plus, Pencil, Trash2, Search, Receipt, AlertCircle } from 'lucide-react';
-import { db, newId, getMesActual, formatMonto, formatPeriodo } from '../data/db';
+import { db, newId, formatMonto, formatPeriodo } from '../data/db';
 import { Modal, ConfirmDialog, EmptyState } from '../components/UI';
 import PeriodoSelector from '../components/PeriodoSelector';
 
-export default function Gastos({ edificioId }) {
+export default function Gastos({ edificioId, periodo: periodoFilter, setPeriodo: setPeriodoFilter }) {
   const [search, setSearch] = useState('');
   const [tipoFilter, setTipoFilter] = useState('todos');
-  const [periodoFilter, setPeriodoFilter] = useState(getMesActual());
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
@@ -135,7 +134,7 @@ export default function Gastos({ edificioId }) {
       {showForm && (
         <GastoForm
           editing={editing}
-          periodoActual={getMesActual()}
+          periodoActual={periodoFilter}
           onSave={handleSave}
           onClose={() => { setEditing(null); setShowForm(false); }}
         />
