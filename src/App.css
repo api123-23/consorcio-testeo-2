@@ -18,8 +18,10 @@
   --success: #0D7A4A;
   --success-light: #E8F5EE;
   --danger: #C53030;
+  --danger-rgb: 197, 48, 48;
   --danger-light: #FDE8E8;
   --warning: #B7791F;
+  --warning-rgb: 183, 121, 31;
   --warning-light: #FEF7E6;
   --sidebar-w: 240px;
   --radius: 8px;
@@ -48,8 +50,10 @@
   --success: #1EA86A;
   --success-light: #1A2E24;
   --danger: #E05353;
+  --danger-rgb: 224, 83, 83;
   --danger-light: #2E1C1C;
   --warning: #D4A830;
+  --warning-rgb: 212, 168, 48;
   --warning-light: #2E2618;
   --shadow-sm: 0 1px 2px rgba(0,0,0,0.2);
   --shadow: 0 1px 3px rgba(0,0,0,0.25);
@@ -701,4 +705,238 @@ tr:focus-within td { background: var(--accent-subtle); }
   .form-row, .form-row-3 { grid-template-columns: 1fr; }
   .card { padding: 16px; }
   .stat-card { padding: 16px 20px; }
+}
+
+/* ─── Auth / Login ─────────────────────────────────────────────── */
+
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  position: relative;
+  overflow: hidden;
+  padding: 20px;
+}
+
+.login-bg {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 20% 30%, rgba(var(--accent-rgb), 0.08) 0%, transparent 50%),
+              radial-gradient(ellipse at 80% 70%, rgba(var(--accent-rgb), 0.05) 0%, transparent 50%);
+}
+
+.login-card {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 40px 36px 32px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: var(--shadow-lg);
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.login-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.login-logo h1 {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--accent);
+  margin: 0;
+}
+
+.login-subtitle {
+  color: var(--text-muted);
+  font-size: 14px;
+  margin: 0;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.login-form .input-with-icon {
+  position: relative;
+}
+
+.login-form .input-with-icon .input-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.login-form .input-with-icon .input-icon-btn {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  border-radius: 4px;
+}
+
+.login-form .input-with-icon .input-icon-btn:hover {
+  color: var(--text-secondary);
+}
+
+.login-form .input-with-icon .form-input {
+  padding-left: 38px;
+  padding-right: 36px;
+}
+
+.login-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 4px;
+}
+
+.login-error {
+  background: var(--danger-light);
+  color: var(--danger);
+  font-size: 13px;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+}
+
+.login-success {
+  background: var(--success-light);
+  color: var(--success);
+  font-size: 13px;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  font-weight: 500;
+}
+
+.login-footer {
+  text-align: center;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.link-btn {
+  background: none;
+  border: none;
+  color: var(--accent);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 0;
+  text-decoration: none;
+}
+
+.link-btn:hover {
+  text-decoration: underline;
+}
+
+/* ─── Danger Zone ──────────────────────────────────────────────── */
+
+.danger-zone {
+  margin-top: 24px;
+  padding: 16px;
+  border: 1px solid rgba(var(--danger), 0.25);
+  border-radius: var(--radius);
+  background: rgba(var(--danger), 0.04);
+}
+
+.danger-zone-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--danger);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.danger-zone-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 0 0 12px;
+  line-height: 1.4;
+}
+
+.btn-danger-outline {
+  background: transparent;
+  color: var(--danger);
+  border: 1px solid var(--danger);
+  padding: 8px 16px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-danger-outline:hover {
+  background: var(--danger-light);
+}
+
+/* ─── ConfirmInput modal ───────────────────────────────────────── */
+
+.confirm-dialog .form-group {
+  text-align: left;
+}
+
+.confirm-dialog .btn-danger:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ─── Loading screen for auth ──────────────────────────────────── */
+
+.loading-screen {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  background: var(--bg);
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }

@@ -19,13 +19,23 @@ export function getDb() {
 
 function initSchema() {
   db.exec(`
+    CREATE TABLE IF NOT EXISTS users (
+      id TEXT PRIMARY KEY,
+      email TEXT UNIQUE NOT NULL,
+      password_hash TEXT NOT NULL,
+      nombre TEXT DEFAULT '',
+      created_at TEXT DEFAULT (datetime('now'))
+    );
+
     CREATE TABLE IF NOT EXISTS edificios (
       id TEXT PRIMARY KEY,
       nombre TEXT NOT NULL,
       direccion TEXT DEFAULT '',
       admin TEXT DEFAULT '',
       metros_totales REAL NOT NULL DEFAULT 0,
-      activo INTEGER DEFAULT 1
+      user_id TEXT NOT NULL DEFAULT '',
+      activo INTEGER DEFAULT 1,
+      FOREIGN KEY (user_id) REFERENCES users(id)
     );
 
     CREATE TABLE IF NOT EXISTS departamentos (

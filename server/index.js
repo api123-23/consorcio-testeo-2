@@ -3,7 +3,8 @@ import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { getDb } from './db.js';
-import { seedData } from './seed.js';
+import authMiddleware from './middleware/auth.js';
+import authRoutes from './routes/auth.js';
 import edificiosRoutes from './routes/edificios.js';
 import departamentosRoutes from './routes/departamentos.js';
 import personasRoutes from './routes/personas.js';
@@ -22,9 +23,14 @@ app.use(cors());
 app.use(express.json());
 
 const db = getDb();
-seedData(db);
 
 const api = express.Router();
+
+// Auth routes (no middleware)
+authRoutes(api, db);
+
+// Protected routes
+api.use(authMiddleware);
 edificiosRoutes(api, db);
 departamentosRoutes(api, db);
 personasRoutes(api, db);

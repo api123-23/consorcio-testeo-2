@@ -12,6 +12,17 @@ let _rev = 0;
 export const getRev = () => _rev;
 function bump() { _rev++; }
 
+export function resetCache() {
+  cache = {
+    edificios: [], departamentos: [], personas: [],
+    propietarios: [], inquilinos: [],
+    gastos: [], pagos: [], liquidaciones: [],
+  };
+  loaded = false;
+  loading = null;
+  bump();
+}
+
 export async function loadData() {
   if (loaded) return;
   if (loading) return loading;
@@ -114,7 +125,8 @@ export const db = {
     return record;
   },
   deleteEdificio: (id) => {
-    cache.edificios = cache.edificios.map(e => e.id === id ? { ...e, activo: 0 } : e); bump();
+    cache.edificios = cache.edificios.map(e => e.id === id ? { ...e, activo: 0 } : e);
+    cache.departamentos = cache.departamentos.map(d => d.edificio_id === id ? { ...d, activo: 0 } : d); bump();
     api.del(`/edificios/${id}`).catch(console.error);
     toast('Edificio eliminado');
   },
