@@ -176,11 +176,15 @@ function GastoForm({ editing, periodoActual, onSave, onClose }) {
   const errors = {};
   if (!form.descripcion.trim()) errors.descripcion = 'Requerido';
   if (!form.monto || form.monto <= 0) errors.monto = 'Debe ser mayor a 0';
-  if (!form.fecha) errors.fecha = 'Requerido';
+  if (form.tipo === 'extraordinario' && !form.fecha) errors.fecha = 'Requerido para gastos extraordinarios';
 
   const handleSubmit = () => {
     if (Object.keys(errors).length) return;
-    onSave({ ...form, monto: Number(form.monto) });
+    const payload = { ...form, monto: Number(form.monto) };
+    if (payload.tipo === 'ordinario' && !payload.fecha) {
+      payload.fecha = payload.periodo + '-01';
+    }
+    onSave(payload);
     onClose();
   };
 
@@ -224,6 +228,9 @@ function GastoForm({ editing, periodoActual, onSave, onClose }) {
             <input className={`form-input ${errors.fecha ? 'error' : ''}`} type="date" value={form.fecha}
               onChange={e => setForm(f => ({ ...f, fecha: e.target.value }))} />
             {errors.fecha && <div className="error-msg"><AlertCircle size={12} /> {errors.fecha}</div>}
+            {form.tipo === 'ordinario' && (
+              <div className="text-xs text-muted" style={{ marginTop: 4 }}>La fecha se asigna automáticamente al primer día del período</div>
+            )}
           </div>
         </div>
         <div className="form-group">
