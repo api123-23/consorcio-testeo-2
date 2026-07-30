@@ -115,5 +115,15 @@ function initSchema() {
       data TEXT DEFAULT '{}',
       FOREIGN KEY (edificio_id) REFERENCES edificios(id)
     );
+
+    CREATE TABLE IF NOT EXISTS recargos (
+      id TEXT PRIMARY KEY,
+      departamento_id TEXT NOT NULL,
+      periodo TEXT NOT NULL,
+      monto REAL NOT NULL DEFAULT 0,
+      descripcion TEXT DEFAULT '',
+      creado_en TEXT DEFAULT '',
+      FOREIGN KEY (departamento_id) REFERENCES departamentos(id)
+    );
   `);
 }

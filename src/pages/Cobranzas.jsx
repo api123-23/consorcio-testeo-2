@@ -1,12 +1,15 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Plus, Trash2, Search, DollarSign, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
-import { db, newId, formatMonto, formatPeriodo, calcularExpensaDepartamento, getEstadoDepartamento, getPropietariosDeDepartamento, getInquilinoActual, getDepartamentosDeEdificio, getRev } from '../data/db';
+import { Plus, Trash2, Search, DollarSign, CheckCircle2, XCircle, AlertCircle, Printer, Percent } from 'lucide-react';
+import { db, newId, formatMonto, formatPeriodo, calcularExpensaDepartamento, getEstadoDepartamento, getPropietariosDeDepartamento, getInquilinoActual, getDepartamentosDeEdificio, getRev, getTotalRecargos, getTotalAdeudado } from '../data/db';
 import { Modal, ConfirmDialog, EmptyState } from '../components/UI';
 import PeriodoSelector from '../components/PeriodoSelector';
 
 export default function Cobranzas({ edificioId, periodo, setPeriodo }) {
   const [search, setSearch] = useState('');
   const [showForm, setShowForm] = useState(false);
+  const [showRecargoForm, setShowRecargoForm] = useState(false);
+  const [recargoDeptoId, setRecargoDeptoId] = useState(null);
+  const [showComprobante, setShowComprobante] = useState(null);
   const [editPago, setEditPago] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [preselectDeptoId, setPreselectDeptoId] = useState(null);
@@ -22,9 +25,11 @@ export default function Cobranzas({ edificioId, periodo, setPeriodo }) {
         const pagosDepto = pagos.filter(p => p.departamento_id === d.id);
         const totalPagado = pagosDepto.reduce((s, p) => s + p.monto, 0);
         const expensa = calcularExpensaDepartamento(d, periodo);
+        const recargos = getTotalRecargos(d.id, periodo);
+        const totalAdeudado = getTotalAdeudado(d.id, periodo);
         const props = getPropietariosDeDepartamento(d.id);
         const inq = getInquilinoActual(d.id);
-        return { departamento: d, estado, pagos: pagosDepto, pago: pagosDepto[0] || null, totalPagado, expensa, propietarios: props, inquilino: inq };
+        return { departamento: d, estado, pagos: pagosDepto, pago: pagosDepto[0] || null, totalPagado, expensa, recargos, totalAdeudado, propietarios: props, inquilino: inq };
       });
   }, [departamentos, pagos, periodo]);
 
@@ -46,6 +51,12 @@ export default function Cobranzas({ edificioId, periodo, setPeriodo }) {
     }
     setEditPago(null);
     setShowForm(false);
+  };
+
+  const handleSaveRecargo = (data) => {
+    db.saveRecargo({ ...data, id: newId('r'), creado_en: new Date().toISOString() });
+    setRecargoDeptoId(null);
+    setShowRecargoForm(false);
   };
 
   const handleDelete = (id) => {
@@ -104,6 +115,7 @@ export default function Cobranzas({ edificioId, periodo, setPeriodo }) {
                 <th>Propietario</th>
                 <th>Ocupante</th>
                 <th>Expensa</th>
+                <th>Recargos</th>
                 <th>Estado</th>
                 <th>Pago</th>
                 <th></th>
@@ -111,13 +123,22 @@ export default function Cobranzas({ edificioId, periodo, setPeriodo }) {
             </thead>
             <tbody>
               {filtrados.length === 0 ? (
-                <tr><td colSpan={7}><EmptyState icon={DollarSign} message="Sin datos" /></td></tr>
+                <tr><td colSpan={8}><EmptyState icon={DollarSign} message="Sin datos" /></td></tr>
               ) : filtrados.map(e => (
                 <tr key={e.departamento.id}>
                   <td className="font-medium">Unidad {e.departamento.numero}</td>
                   <td className="text-muted">{e.propietarios.map(p => p.nombre.split(' ')[0]).join(', ') || '—'}</td>
                   <td className="text-muted">{e.inquilino ? e.inquilino.nombre.split(' ')[0] : <span className="text-xs">Prop.</span>}</td>
                   <td className="font-medium">{formatMonto(e.expensa)}</td>
+                  <td>
+                    {e.recargos > 0 ? (
+                      <span className="text-sm font-medium" style={{ color: 'var(--danger)' }}>
+                        +{formatMonto(e.recargos)}
+                      </span>
+                    ) : (
+                      <span className="text-muted text-sm">—</span>
+                    )}
+                  </td>
                   <td>
                     <span className={`badge ${e.estado === 'al_dia' ? 'badge-success' : e.estado === 'parcial' ? 'badge-warning' : 'badge-danger'}`}>
                       {e.estado === 'al_dia' ? 'Pagó' : e.estado === 'parcial' ? 'Parcial' : 'Debe'}
@@ -136,19 +157,29 @@ export default function Cobranzas({ edificioId, periodo, setPeriodo }) {
                     )}
                   </td>
                   <td>
-                    {e.estado === 'deudor' || e.estado === 'parcial' ? (
-                      <button className="btn btn-success btn-sm"
-                        onClick={() => { setEditPago(null); setShowForm(true); setPreselectDeptoId(e.departamento.id); }}>
-                        {e.estado === 'parcial' ? 'Completar pago' : 'Registrar pago'}
+                    <div className="flex gap-1">
+                      {e.pagos.length > 0 && (
+                        <button className="btn-icon btn-sm" title="Comprobante"
+                          onClick={() => setShowComprobante(e)}>
+                          <Printer size={13} />
+                        </button>
+                      )}
+                      <button className="btn-icon btn-sm" title="Aplicar recargo"
+                        onClick={() => { setRecargoDeptoId(e.departamento.id); setShowRecargoForm(true); }}>
+                        <Percent size={13} />
                       </button>
-                    ) : e.estado === 'al_dia' && e.pago && (
-                      <div className="flex gap-2">
+                      {e.estado === 'deudor' || e.estado === 'parcial' ? (
+                        <button className="btn btn-success btn-sm"
+                          onClick={() => { setEditPago(null); setShowForm(true); setPreselectDeptoId(e.departamento.id); }}>
+                          {e.estado === 'parcial' ? 'Completar' : 'Cobrar'}
+                        </button>
+                      ) : e.estado === 'al_dia' && e.pago && (
                         <button className="btn-icon btn-sm" title="Eliminar pago"
                           onClick={() => setConfirmDelete(e.pago)}>
                           <Trash2 size={13} />
                         </button>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -164,6 +195,22 @@ export default function Cobranzas({ edificioId, periodo, setPeriodo }) {
           preselectDeptoId={preselectDeptoId}
           onSave={handleSavePago}
           onClose={() => { setEditPago(null); setShowForm(false); setPreselectDeptoId(null); }}
+        />
+      )}
+
+      {showRecargoForm && (
+        <RecargoForm
+          departamentoId={recargoDeptoId}
+          periodo={periodo}
+          onSave={handleSaveRecargo}
+          onClose={() => { setRecargoDeptoId(null); setShowRecargoForm(false); }}
+        />
+      )}
+
+      {showComprobante && (
+        <ComprobanteModal
+          data={showComprobante}
+          onClose={() => setShowComprobante(null)}
         />
       )}
 
@@ -192,13 +239,15 @@ function CobranzaForm({ edificioId, periodo, preselectDeptoId, onSave, onClose }
     comprobante: '',
   });
 
-  const expensaCalculada = selectedDepto ? calcularExpensaDepartamento(selectedDepto, periodo) : 0;
+  const expensaCalculada = selectedDepto ? getTotalAdeudado(selectedDepto.id, periodo) : 0;
   const pagosExistentes = useMemo(() => {
     if (!selectedDepto) return [];
     return db.getPagos().filter(p => p.departamento_id === selectedDepto.id && p.periodo === periodo);
   }, [selectedDepto, periodo, getRev()]);
   const totalPagado = pagosExistentes.reduce((s, p) => s + p.monto, 0);
   const restante = Math.max(0, expensaCalculada - totalPagado);
+  const soloExpensa = selectedDepto ? calcularExpensaDepartamento(selectedDepto, periodo) : 0;
+  const recargosDepto = selectedDepto ? getTotalRecargos(selectedDepto.id, periodo) : 0;
 
   // Auto-select if preselectDeptoId is provided
   useEffect(() => {
@@ -210,10 +259,10 @@ function CobranzaForm({ edificioId, periodo, preselectDeptoId, onSave, onClose }
 
   const handleDeptoSelect = (d) => {
     setSelectedDepto(d);
-    const expensa = calcularExpensaDepartamento(d, periodo);
+    const total = getTotalAdeudado(d.id, periodo);
     const pagado = db.getPagos().filter(p => p.departamento_id === d.id && p.periodo === periodo)
       .reduce((s, p) => s + p.monto, 0);
-    setForm(f => ({ ...f, departamento_id: d.id, monto: Math.max(0, expensa - pagado) }));
+    setForm(f => ({ ...f, departamento_id: d.id, monto: Math.max(0, total - pagado) }));
   };
 
   const handlePagoTotal = () => {
@@ -272,6 +321,10 @@ function CobranzaForm({ edificioId, periodo, preselectDeptoId, onSave, onClose }
               </div>
               <div className="form-group">
                 <label className="form-label">Monto</label>
+                <div className="text-xs text-muted" style={{ marginBottom: 4 }}>
+                  Expensa: {formatMonto(soloExpensa)} {recargosDepto > 0 ? `+ Recargos: ${formatMonto(recargosDepto)}` : ''}
+                  <br />Total adeudado: {formatMonto(expensaCalculada)}
+                </div>
                 {pagosExistentes.length > 0 && (
                   <div className="text-xs text-muted" style={{ marginBottom: 4 }}>
                     Pagado: {formatMonto(totalPagado)} — Resta: {formatMonto(restante)}
@@ -319,6 +372,123 @@ function CobranzaForm({ edificioId, periodo, preselectDeptoId, onSave, onClose }
         <button className="btn btn-secondary" onClick={onClose}>Cancelar</button>
         <button className="btn btn-primary" onClick={handleSubmit} disabled={!selectedDepto}>
           Registrar pago
+        </button>
+      </div>
+    </Modal>
+  );
+}
+
+function RecargoForm({ departamentoId, periodo, onSave, onClose }) {
+  const departamento = db.getDepartamentos().find(d => d.id === departamentoId);
+  const [monto, setMonto] = useState('');
+  const [descripcion, setDescripcion] = useState('');
+
+  const errors = {};
+  if (!monto || Number(monto) <= 0) errors.monto = 'Monto inválido';
+
+  const handleSubmit = () => {
+    if (Object.keys(errors).length) return;
+    onSave({
+      departamento_id: departamentoId,
+      periodo,
+      monto: Number(monto),
+      descripcion,
+    });
+    onClose();
+  };
+
+  return (
+    <Modal isOpen={true} onClose={onClose} title={`Recargo - Unidad ${departamento?.numero || ''}`}>
+      <div className="modal-body">
+        <div className="form-group">
+          <label className="form-label">Monto del recargo</label>
+          <input className={`form-input ${errors.monto ? 'error' : ''}`} type="number"
+            value={monto} onChange={e => setMonto(e.target.value)}
+            placeholder="Ej: 5000" autoFocus />
+          {errors.monto && <div className="error-msg"><AlertCircle size={12} /> {errors.monto}</div>}
+        </div>
+        <div className="form-group">
+          <label className="form-label">Descripción (opcional)</label>
+          <input className="form-input" value={descripcion}
+            onChange={e => setDescripcion(e.target.value)}
+            placeholder="Ej: Interés por mora" maxLength={100} />
+        </div>
+      </div>
+      <div className="modal-footer">
+        <button className="btn btn-secondary" onClick={onClose}>Cancelar</button>
+        <button className="btn btn-primary" onClick={handleSubmit}>Aplicar recargo</button>
+      </div>
+    </Modal>
+  );
+}
+
+function ComprobanteModal({ data, onClose }) {
+  const depto = data.departamento;
+  const handlePrint = () => window.print();
+
+  return (
+    <Modal isOpen={true} onClose={onClose} title="Comprobante de pago" size="modal-lg">
+      <div className="modal-body comprobante" id="comprobante-print">
+        <div style={{ textAlign: 'center', marginBottom: 24 }}>
+          <h3 style={{ fontSize: 18, fontWeight: 700 }}>RECIBO DE PAGO</h3>
+          <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+            {new Date().toLocaleDateString('es-AR', { day: '2-digit', month: 'long', year: 'numeric' })}
+          </p>
+        </div>
+        <div className="separator" />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 14 }}>
+          <div className="comprobante-row">
+            <span className="comprobante-label">Unidad:</span>
+            <span className="comprobante-value">{depto.numero}</span>
+          </div>
+          <div className="comprobante-row">
+            <span className="comprobante-label">Período:</span>
+            <span className="comprobante-value">{formatPeriodo(data.pagos[0]?.periodo || '')}</span>
+          </div>
+          <div className="comprobante-row">
+            <span className="comprobante-label">Propietario:</span>
+            <span className="comprobante-value">{data.propietarios.map(p => p.nombre).join(', ') || '—'}</span>
+          </div>
+          <div className="separator" />
+          <div className="comprobante-row">
+            <span className="comprobante-label">Expensa:</span>
+            <span className="comprobante-value">{formatMonto(data.expensa)}</span>
+          </div>
+          {data.recargos > 0 && (
+            <div className="comprobante-row">
+              <span className="comprobante-label">Recargos:</span>
+              <span className="comprobante-value" style={{ color: 'var(--danger)' }}>+{formatMonto(data.recargos)}</span>
+            </div>
+          )}
+          <div className="comprobante-row" style={{ fontWeight: 700, fontSize: 16, borderTop: '2px solid var(--border)', paddingTop: 8 }}>
+            <span className="comprobante-label">Total:</span>
+            <span className="comprobante-value">{formatMonto(data.totalAdeudado)}</span>
+          </div>
+          <div className="separator" />
+          <div className="comprobante-row">
+            <span className="comprobante-label">Pagado:</span>
+            <span className="comprobante-value" style={{ color: 'var(--success)' }}>{formatMonto(data.totalPagado)}</span>
+          </div>
+          <div className="comprobante-row">
+            <span className="comprobante-label">Saldo:</span>
+            <span className="comprobante-value" style={{ color: data.totalAdeudado - data.totalPagado > 0 ? 'var(--danger)' : 'var(--success)' }}>
+              {formatMonto(data.totalAdeudado - data.totalPagado)}
+            </span>
+          </div>
+          <div className="separator" />
+          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 8 }}>
+            <div>Método: {data.pagos.map(p => p.metodo).filter(Boolean).join(', ')}</div>
+            <div>Comprobante: {data.pagos.map(p => p.comprobante).filter(Boolean).join(', ') || '—'}</div>
+            {data.pagos.map((p, i) => (
+              <div key={i}>Fecha pago {i + 1}: {new Date((p.fecha_pago || '').split('T')[0] + 'T12:00').toLocaleDateString('es-AR')}</div>
+            ))}
+          </div>
+        </div>
+      </div>
+      <div className="modal-footer no-print">
+        <button className="btn btn-secondary" onClick={onClose}>Cerrar</button>
+        <button className="btn btn-primary" onClick={handlePrint}>
+          <Printer size={14} /> Imprimir
         </button>
       </div>
     </Modal>

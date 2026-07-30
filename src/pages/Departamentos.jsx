@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo } from 'react';
-import { Plus, Pencil, Trash2, Search, Building2, AlertCircle, UserPlus, X } from 'lucide-react';
-import { db, newId, getMesActual, formatMonto, getEstadoDepartamento, calcularExpensaDepartamento, getPeriodosDeuda, getPropietariosDeDepartamento, getInquilinoActual, getRev, validateDNI, validateEmail, isDNIUnique, isEmailUnique } from '../data/db';
+import { Plus, Pencil, Trash2, Search, Building2, AlertCircle, UserPlus, X, Clock } from 'lucide-react';
+import { db, newId, getMesActual, formatMonto, formatPeriodo, getEstadoDepartamento, calcularExpensaDepartamento, getPeriodosDeuda, getPropietariosDeDepartamento, getInquilinoActual, getHistorialOcupantes, getRev, validateDNI, validateEmail, isDNIUnique, isEmailUnique } from '../data/db';
 import { Modal, ConfirmDialog, EmptyState } from '../components/UI';
 
 export default function Departamentos({ edificioId }) {
@@ -8,6 +8,7 @@ export default function Departamentos({ edificioId }) {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
+  const [historialDepto, setHistorialDepto] = useState(null);
 
   const departamentos = useMemo(() => {
     return db.getDepartamentos().filter(d => d.edificio_id === edificioId);
@@ -102,9 +103,14 @@ export default function Departamentos({ edificioId }) {
                 const inquilino = getInquilinoActual(d.id);
                 const estado = getEstadoDepartamento(d.id, periodo);
                 const expensa = calcularExpensaDepartamento(d, periodo);
+                const deudaMeses = getPeriodosDeuda(d.id);
+                const deudaCronica = deudaMeses >= 3;
                 return (
-                  <tr key={d.id}>
-                    <td className="font-medium">Unidad {d.numero}</td>
+                  <tr key={d.id} className={deudaCronica ? 'deuda-cronica' : ''}>
+                    <td className="font-medium">
+                      Unidad {d.numero}
+                      {deudaCronica && <span className="badge badge-danger" style={{ marginLeft: 6, fontSize: 10 }}>{deudaMeses}m</span>}
+                    </td>
                     <td className="text-muted">{d.piso}{d.letra ? (d.letra !== 'PB' ? d.letra : '') : ''}</td>
                     <td>{props.map(p => p.nombre).join(', ') || <span className="text-muted">—</span>}</td>
                     <td>{inquilino ? inquilino.nombre : <span className="text-muted">Vive propietario</span>}</td>
@@ -116,7 +122,11 @@ export default function Departamentos({ edificioId }) {
                       </span>
                     </td>
                     <td>
-                      <div className="flex gap-2">
+                      <div className="flex gap-1">
+                        <button className="btn-icon btn-sm" title="Historial de ocupantes"
+                          onClick={() => setHistorialDepto(d)}>
+                          <Clock size={13} />
+                        </button>
                         <button className="btn-icon btn-sm" title="Editar"
                           onClick={() => { setEditing(d); setShowForm(true); }}>
                           <Pencil size={13} />
@@ -153,7 +163,49 @@ export default function Departamentos({ edificioId }) {
           message={`¿Eliminar Unidad ${confirmDelete.numero}?`}
         />
       )}
+
+      {historialDepto && (
+        <HistorialModal
+          departamento={historialDepto}
+          onClose={() => setHistorialDepto(null)}
+        />
+      )}
     </div>
+  );
+}
+
+function HistorialModal({ departamento, onClose }) {
+  const historial = getHistorialOcupantes(departamento.id);
+
+  return (
+    <Modal isOpen={true} onClose={onClose} title={`Historial - Unidad ${departamento.numero}`}>
+      <div className="modal-body">
+        {historial.length === 0 ? (
+          <div className="text-muted text-sm">Sin datos de ocupantes</div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {historial.map((h, i) => (
+              <div key={i} className="historial-item">
+                <div className="historial-item-header">
+                  <span className={`badge ${h.tipo === 'propietario' ? 'badge-info' : 'badge-warning'}`} style={{ fontSize: 10 }}>
+                    {h.tipo === 'propietario' ? 'Prop.' : 'Inq.'}
+                  </span>
+                  <span className="font-medium">{h.persona?.nombre || '—'}</span>
+                  {h.activo && <span className="badge badge-success" style={{ fontSize: 10 }}>Actual</span>}
+                </div>
+                <div className="text-xs text-muted" style={{ marginTop: 2 }}>
+                  {h.desde ? `Desde: ${new Date(h.desde + 'T12:00').toLocaleDateString('es-AR')}` : '—'}
+                  {h.hasta ? ` | Hasta: ${new Date(h.hasta + 'T12:00').toLocaleDateString('es-AR')}` : h.activo ? '' : ' | Finalizado'}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+      <div className="modal-footer">
+        <button className="btn btn-secondary" onClick={onClose}>Cerrar</button>
+      </div>
+    </Modal>
   );
 }
 

@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
-import { Building2, Users, AlertCircle, CheckCircle2, DollarSign, Calendar, TrendingUp } from 'lucide-react';
-import { db, getMesActual, formatPeriodo, formatMonto, getEstadoDepartamento, calcularExpensaDepartamento, getPropietariosDeDepartamento, getInquilinoActual, getDepartamentosDeEdificio, getRev } from '../data/db';
+import { Building2, Users, AlertCircle, CheckCircle2, DollarSign, Calendar, TrendingUp, Clock, ShieldAlert } from 'lucide-react';
+import { db, getMesActual, formatPeriodo, formatMonto, getEstadoDepartamento, calcularExpensaDepartamento, getPropietariosDeDepartamento, getInquilinoActual, getDepartamentosDeEdificio, getRev, getPeriodosDeuda } from '../data/db';
 import EvolucionChart from '../components/charts.jsx';
 
 export default function Dashboard({ edificioId }) {
@@ -38,7 +38,9 @@ export default function Dashboard({ edificioId }) {
 
     const gastosRecientes = gastos.sort((a, b) => new Date(b.fecha) - new Date(a.fecha)).slice(0, 5);
 
-    return { edificio, departamentos, personas, periodo, totalGastos, gastosOrdinarios, gastosExtra, pagados, deudores, montoRecaudado, pagosMes, gastosRecientes };
+    const deudaCronica = departamentos.filter(d => getPeriodosDeuda(d.id) >= 3);
+
+    return { edificio, departamentos, personas, periodo, totalGastos, gastosOrdinarios, gastosExtra, pagados, parciales, deudores, montoRecaudado, pagosMes, gastosRecientes, deudaCronica };
   }, [edificioId, getRev()]);
 
   const pctRecaudado = data.totalGastos > 0 ? Math.round((data.montoRecaudado / data.totalGastos) * 100) : 0;
@@ -123,6 +125,33 @@ export default function Dashboard({ edificioId }) {
           </div>
         </div>
 
+        {data.deudaCronica.length > 0 && (
+          <div className="card" style={{ borderColor: 'var(--danger)', background: 'var(--danger-light)' }}>
+            <div className="card-header">
+              <span className="card-title" style={{ color: 'var(--danger)' }}>
+                <ShieldAlert size={16} style={{ marginRight: 6 }} />
+                Deuda crónica ({data.deudaCronica.length} unidades con 3+ meses)
+              </span>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {data.deudaCronica.map(d => {
+                const props = getPropietariosDeDepartamento(d.id);
+                const deudaMeses = getPeriodosDeuda(d.id);
+                return (
+                  <div key={d.id} className="list-row" style={{ background: 'var(--surface)' }}>
+                    <div className="flex items-center gap-2">
+                      <Clock size={14} style={{ color: 'var(--danger)' }} />
+                      <span className="font-medium">Unidad {d.numero}</span>
+                      <span className="text-xs text-muted">{props[0]?.nombre?.split(' ')[0] || ''}</span>
+                      <span className="badge badge-danger" style={{ fontSize: 10 }}>{deudaMeses} meses</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         <div className="grid-2">
           <div className="card">
             <div className="card-header">
@@ -134,10 +163,13 @@ export default function Dashboard({ edificioId }) {
                 const estado = getEstadoDepartamento(d.id, data.periodo);
                 const props = getPropietariosDeDepartamento(d.id);
                 const inq = getInquilinoActual(d.id);
+                const deudaMeses = getPeriodosDeuda(d.id);
                 return (
-                    <div key={d.id} className="list-row">
+                    <div key={d.id} className={`list-row ${deudaMeses >= 3 ? 'deuda-cronica-row' : ''}`}>
                       <div className="flex items-center gap-2">
-                        {estado === 'al_dia'
+                        {deudaMeses >= 3
+                          ? <ShieldAlert size={14} style={{ color: 'var(--danger)' }} />
+                          : estado === 'al_dia'
                           ? <CheckCircle2 size={14} style={{ color: 'var(--success)' }} />
                           : estado === 'parcial'
                           ? <AlertCircle size={14} style={{ color: 'var(--warning)' }} />
@@ -145,6 +177,7 @@ export default function Dashboard({ edificioId }) {
                         <span className="font-medium">Unidad {d.numero}</span>
                         <span className="text-xs text-muted">{props[0]?.nombre?.split(' ')[0] || ''}</span>
                         {inq && <span className="badge badge-info" style={{ fontSize: 10 }}>Inq.</span>}
+                        {deudaMeses >= 3 && <span className="badge badge-danger" style={{ fontSize: 10 }}>{deudaMeses}m</span>}
                       </div>
                       <span className={`badge ${estado === 'al_dia' ? 'badge-success' : estado === 'parcial' ? 'badge-warning' : 'badge-danger'}`}>
                         {estado === 'al_dia' ? 'Al día' : estado === 'parcial' ? 'Parcial' : 'Deudor'}

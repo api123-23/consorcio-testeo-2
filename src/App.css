@@ -861,6 +861,39 @@ tr:focus-within td { background: var(--accent-subtle); }
   text-decoration: underline;
 }
 
+/* ─── Deuda crónica ──────────────────────────────────────────── */
+tr.deuda-cronica td { background: rgba(var(--danger-rgb), 0.04); }
+tr.deuda-cronica:hover td { background: rgba(var(--danger-rgb), 0.08); }
+.deuda-cronica-row { background: rgba(var(--danger-rgb), 0.04); }
+
+/* ─── Historial modal ─────────────────────────────────────────── */
+.historial-item {
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+.historial-item-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ─── Comprobante ─────────────────────────────────────────────── */
+.comprobante-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.comprobante-label {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+.comprobante-value {
+  font-weight: 600;
+  text-align: right;
+}
+
 /* ─── Danger Zone ──────────────────────────────────────────────── */
 
 .danger-zone {

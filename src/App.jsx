@@ -11,6 +11,7 @@ import Gastos from './pages/Gastos';
 import Liquidacion from './pages/Liquidacion';
 import Cobranzas from './pages/Cobranzas';
 import Reportes from './pages/Reportes';
+import Estadisticas from './pages/Estadisticas';
 import SettingsModal from './components/SettingsModal';
 
 import {
@@ -39,6 +40,7 @@ const NAV = [
   { id: 'cobranzas', label: 'Cobranzas', icon: DollarSign, group: 'operaciones' },
   { id: 'liquidacion', label: 'Liquidación', icon: FileSpreadsheet, group: 'operaciones' },
   { id: 'reportes', label: 'Reportes', icon: BarChart2, group: 'operaciones' },
+  { id: 'estadisticas', label: 'Estadísticas', icon: BarChart2, group: 'operaciones' },
 ];
 
 const PAGES = {
@@ -49,6 +51,7 @@ const PAGES = {
   liquidacion: Liquidacion,
   cobranzas: Cobranzas,
   reportes: Reportes,
+  estadisticas: Estadisticas,
 };
 
 function BuildingSelector({ edificioId, onSelect }) {

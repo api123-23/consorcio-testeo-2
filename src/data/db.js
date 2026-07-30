@@ -5,6 +5,7 @@ let cache = {
   edificios: [], departamentos: [], personas: [],
   propietarios: [], inquilinos: [],
   gastos: [], pagos: [], liquidaciones: [],
+  recargos: [],
 };
 let loaded = false;
 let loading = null;
@@ -17,6 +18,7 @@ export function resetCache() {
     edificios: [], departamentos: [], personas: [],
     propietarios: [], inquilinos: [],
     gastos: [], pagos: [], liquidaciones: [],
+    recargos: [],
   };
   loaded = false;
   loading = null;
@@ -28,7 +30,7 @@ export async function loadData() {
   if (loading) return loading;
   loading = (async () => {
     try {
-      const [edificios, departamentos, personas, propietarios, inquilinos, gastos, pagos, liquidaciones] =
+      const [edificios, departamentos, personas, propietarios, inquilinos, gastos, pagos, liquidaciones, recargos] =
         await Promise.all([
           api.get('/edificios'),
           api.get('/departamentos'),
@@ -38,8 +40,9 @@ export async function loadData() {
           api.get('/gastos'),
           api.get('/pagos'),
           api.get('/liquidaciones'),
+          api.get('/recargos'),
         ]);
-      cache = { edificios, departamentos, personas, propietarios, inquilinos, gastos, pagos, liquidaciones };
+      cache = { edificios, departamentos, personas, propietarios, inquilinos, gastos, pagos, liquidaciones, recargos };
       loaded = true;
     } finally {
       loading = null;
@@ -72,6 +75,29 @@ export function getInquilinoActual(deptoId) {
   const rel = cache.inquilinos.find(r => r.departamento_id === deptoId && r.activo && !r.fecha_hasta);
   if (!rel) return null;
   return cache.personas.find(p => p.id === rel.persona_id) || null;
+}
+
+export function getHistorialOcupantes(deptoId) {
+  const props = getPropietariosDeDepartamento(deptoId);
+  const propEntries = props.map(p => ({
+    tipo: 'propietario',
+    persona: p,
+    desde: null,
+    hasta: null,
+  }));
+  const inquilinos = cache.inquilinos.filter(r => r.departamento_id === deptoId && r.activo !== 0);
+  const inqEntries = inquilinos.map(r => ({
+    tipo: 'inquilino',
+    persona: cache.personas.find(p => p.id === r.persona_id),
+    desde: r.fecha_desde || null,
+    hasta: r.fecha_hasta || null,
+    activo: r.activo && !r.fecha_hasta,
+  })).filter(e => e.persona);
+  return [...propEntries, ...inqEntries].sort((a, b) => {
+    if (a.activo && !b.activo) return -1;
+    if (!a.activo && b.activo) return 1;
+    return (b.desde || '') > (a.desde || '') ? 1 : -1;
+  });
 }
 
 export function getDepartamentosDeEdificio(edificioId, soloActivos = true) {
@@ -233,6 +259,21 @@ export const db = {
     toast('Liquidación guardada');
     return record;
   },
+
+  // Recargos
+  getRecargos: () => cache.recargos || [],
+  saveRecargo: (r) => {
+    const record = { ...r }; bump();
+    updateCache('recargos', record);
+    api.post('/recargos', record).catch(console.error);
+    toast('Recargo aplicado');
+    return record;
+  },
+  deleteRecargo: (id) => {
+    removeFromCache('recargos', id); bump();
+    api.del(`/recargos/${id}`).catch(console.error);
+    toast('Recargo eliminado');
+  },
 };
 
 // ─── ID generator ──────────────────────────────────────────────────
@@ -272,15 +313,26 @@ export const calcularExpensaDepartamento = (departamento, periodo) => {
   return Math.round((total * (departamento.metros_cuadrados || 0)) / edificio.metros_totales);
 };
 
+export const getTotalRecargos = (departamento_id, periodo) => {
+  return cache.recargos
+    .filter(r => r.departamento_id === departamento_id && r.periodo === periodo)
+    .reduce((s, r) => s + r.monto, 0);
+};
+
+export const getTotalAdeudado = (departamento_id, periodo) => {
+  const depto = cache.departamentos.find(d => d.id === departamento_id);
+  if (!depto) return 0;
+  const expensa = calcularExpensaDepartamento(depto, periodo);
+  const recargos = getTotalRecargos(departamento_id, periodo);
+  return expensa + recargos;
+};
+
 export const getEstadoDepartamento = (departamento_id, periodo) => {
   const pagos = cache.pagos.filter(p => p.departamento_id === departamento_id && p.periodo === periodo);
   if (pagos.length === 0) return 'deudor';
   const totalPagado = pagos.reduce((s, p) => s + p.monto, 0);
-  const depto = cache.departamentos.find(d => d.id === departamento_id);
-  if (depto) {
-    const expensa = calcularExpensaDepartamento(depto, periodo);
-    if (totalPagado < expensa) return 'parcial';
-  }
+  const totalAdeudado = getTotalAdeudado(departamento_id, periodo);
+  if (totalPagado < totalAdeudado) return 'parcial';
   return 'al_dia';
 };
 

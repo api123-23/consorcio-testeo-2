@@ -13,6 +13,7 @@ import inquilinosRoutes from './routes/inquilinos.js';
 import gastosRoutes from './routes/gastos.js';
 import pagosRoutes from './routes/pagos.js';
 import liquidacionesRoutes from './routes/liquidaciones.js';
+import recargosRoutes from './routes/recargos.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -39,6 +40,7 @@ inquilinosRoutes(api, db);
 gastosRoutes(api, db);
 pagosRoutes(api, db);
 liquidacionesRoutes(api, db);
+recargosRoutes(api, db);
 
 app.use('/api', api);
 
