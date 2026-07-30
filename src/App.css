@@ -861,6 +861,18 @@ tr:focus-within td { background: var(--accent-subtle); }
   text-decoration: underline;
 }
 
+/* ─── Recargo button ─────────────────────────────────────────── */
+.btn-recargo {
+  background: var(--warning-light);
+  color: var(--warning);
+  border: 1px solid rgba(var(--warning-rgb), 0.2);
+  white-space: nowrap;
+}
+.btn-recargo:hover {
+  background: #FDEBB3;
+  border-color: rgba(var(--warning-rgb), 0.4);
+}
+
 /* ─── Deuda crónica ──────────────────────────────────────────── */
 tr.deuda-cronica td { background: rgba(var(--danger-rgb), 0.04); }
 tr.deuda-cronica:hover td { background: rgba(var(--danger-rgb), 0.08); }

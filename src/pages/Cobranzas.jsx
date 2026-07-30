@@ -164,9 +164,9 @@ export default function Cobranzas({ edificioId, periodo, setPeriodo }) {
                           <Printer size={13} />
                         </button>
                       )}
-                      <button className="btn-icon btn-sm" title="Aplicar recargo"
+                      <button className="btn btn-sm btn-recargo" title="Aplicar recargo por mora"
                         onClick={() => { setRecargoDeptoId(e.departamento.id); setShowRecargoForm(true); }}>
-                        <Percent size={13} />
+                        <Percent size={12} /> Recargo
                       </button>
                       {e.estado === 'deudor' || e.estado === 'parcial' ? (
                         <button className="btn btn-success btn-sm"
@@ -380,19 +380,27 @@ function CobranzaForm({ edificioId, periodo, preselectDeptoId, onSave, onClose }
 
 function RecargoForm({ departamentoId, periodo, onSave, onClose }) {
   const departamento = db.getDepartamentos().find(d => d.id === departamentoId);
+  const expensaBase = departamento ? calcularExpensaDepartamento(departamento, periodo) : 0;
+  const [modo, setModo] = useState('monto');
   const [monto, setMonto] = useState('');
+  const [porcentaje, setPorcentaje] = useState('');
   const [descripcion, setDescripcion] = useState('');
 
+  const montoCalculado = modo === 'porcentaje' && porcentaje
+    ? Math.round(expensaBase * Number(porcentaje) / 100)
+    : Number(monto);
+
   const errors = {};
-  if (!monto || Number(monto) <= 0) errors.monto = 'Monto inválido';
+  if (modo === 'monto' && (!monto || Number(monto) <= 0)) errors.monto = 'Monto inválido';
+  if (modo === 'porcentaje' && (!porcentaje || Number(porcentaje) <= 0 || Number(porcentaje) > 100)) errors.porcentaje = 'Porcentaje inválido (1-100)';
 
   const handleSubmit = () => {
-    if (Object.keys(errors).length) return;
+    if (Object.keys(errors).length || montoCalculado <= 0) return;
     onSave({
       departamento_id: departamentoId,
       periodo,
-      monto: Number(monto),
-      descripcion,
+      monto: montoCalculado,
+      descripcion: descripcion || (modo === 'porcentaje' ? `Recargo ${porcentaje}%` : 'Recargo manual'),
     });
     onClose();
   };
@@ -401,12 +409,46 @@ function RecargoForm({ departamentoId, periodo, onSave, onClose }) {
     <Modal isOpen={true} onClose={onClose} title={`Recargo - Unidad ${departamento?.numero || ''}`}>
       <div className="modal-body">
         <div className="form-group">
-          <label className="form-label">Monto del recargo</label>
-          <input className={`form-input ${errors.monto ? 'error' : ''}`} type="number"
-            value={monto} onChange={e => setMonto(e.target.value)}
-            placeholder="Ej: 5000" autoFocus />
-          {errors.monto && <div className="error-msg"><AlertCircle size={12} /> {errors.monto}</div>}
+          <label className="form-label">Expensa del período</label>
+          <div className="text-sm font-semibold" style={{ color: 'var(--accent)' }}>{formatMonto(expensaBase)}</div>
         </div>
+
+        <div className="form-group">
+          <label className="form-label">Tipo de recargo</label>
+          <div className="tabs" style={{ width: '100%' }}>
+            <button className={`tab ${modo === 'monto' ? 'active' : ''}`} style={{ flex: 1 }}
+              onClick={() => setModo('monto')}>Monto fijo</button>
+            <button className={`tab ${modo === 'porcentaje' ? 'active' : ''}`} style={{ flex: 1 }}
+              onClick={() => setModo('porcentaje')}>Porcentaje</button>
+          </div>
+        </div>
+
+        {modo === 'monto' ? (
+          <div className="form-group">
+            <label className="form-label">Monto del recargo</label>
+            <input className={`form-input ${errors.monto ? 'error' : ''}`} type="number"
+              value={monto} onChange={e => setMonto(e.target.value)}
+              placeholder="Ej: 5000" autoFocus />
+            {errors.monto && <div className="error-msg"><AlertCircle size={12} /> {errors.monto}</div>}
+          </div>
+        ) : (
+          <div className="form-group">
+            <label className="form-label">Porcentaje de la expensa</label>
+            <div className="monto-input-wrap">
+              <input className={`form-input ${errors.porcentaje ? 'error' : ''}`} type="number"
+                value={porcentaje} onChange={e => setPorcentaje(e.target.value)}
+                placeholder="Ej: 10" min="1" max="100" autoFocus />
+              <span className="text-sm font-medium" style={{ padding: '9px 12px', background: 'var(--surface-2)', borderRadius: 8, whiteSpace: 'nowrap' }}>%</span>
+            </div>
+            {errors.porcentaje && <div className="error-msg"><AlertCircle size={12} /> {errors.porcentaje}</div>}
+            {porcentaje > 0 && Number(porcentaje) <= 100 && (
+              <div className="text-xs text-muted" style={{ marginTop: 4 }}>
+                {porcentaje}% de {formatMonto(expensaBase)} = <strong style={{ color: 'var(--danger)' }}>{formatMonto(montoCalculado)}</strong>
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="form-group">
           <label className="form-label">Descripción (opcional)</label>
           <input className="form-input" value={descripcion}
@@ -416,7 +458,9 @@ function RecargoForm({ departamentoId, periodo, onSave, onClose }) {
       </div>
       <div className="modal-footer">
         <button className="btn btn-secondary" onClick={onClose}>Cancelar</button>
-        <button className="btn btn-primary" onClick={handleSubmit}>Aplicar recargo</button>
+        <button className="btn btn-primary" onClick={handleSubmit} disabled={montoCalculado <= 0}>
+          Aplicar: {formatMonto(montoCalculado)}
+        </button>
       </div>
     </Modal>
   );

@@ -78,15 +78,19 @@ export function getInquilinoActual(deptoId) {
 }
 
 export function getHistorialOcupantes(deptoId) {
-  const props = getPropietariosDeDepartamento(deptoId);
-  const propEntries = props.map(p => ({
-    tipo: 'propietario',
-    persona: p,
-    desde: null,
-    hasta: null,
-  }));
-  const inquilinos = cache.inquilinos.filter(r => r.departamento_id === deptoId && r.activo !== 0);
-  const inqEntries = inquilinos.map(r => ({
+  const allPropRels = cache.propietarios.filter(r => r.departamento_id === deptoId);
+  const propEntries = allPropRels.map(r => {
+    const esActivo = r.activo && !r.fecha_hasta;
+    return {
+      tipo: 'propietario',
+      persona: cache.personas.find(p => p.id === r.persona_id),
+      desde: r.fecha_desde || null,
+      hasta: r.fecha_hasta || null,
+      activo: esActivo,
+    };
+  }).filter(e => e.persona);
+  const allInqRels = cache.inquilinos.filter(r => r.departamento_id === deptoId && r.activo !== 0);
+  const inqEntries = allInqRels.map(r => ({
     tipo: 'inquilino',
     persona: cache.personas.find(p => p.id === r.persona_id),
     desde: r.fecha_desde || null,
@@ -190,15 +194,17 @@ export const db = {
   // Propietarios
   getPropietarios: () => cache.propietarios || [],
   savePropietario: (r) => {
-    const record = { ...r }; bump();
+    const hoy = new Date().toISOString().slice(0, 10);
+    const record = { ...r, fecha_desde: r.fecha_desde || hoy }; bump();
     updateCache('propietarios', record);
     api.post('/propietarios', record).catch(console.error);
     toast('Propietario asignado');
     return record;
   },
   removePropietario: (deptoId, personaId) => {
+    const hoy = new Date().toISOString().slice(0, 10);
     cache.propietarios = cache.propietarios.map(r =>
-      r.departamento_id === deptoId && r.persona_id === personaId ? { ...r, activo: 0 } : r
+      r.departamento_id === deptoId && r.persona_id === personaId ? { ...r, activo: 0, fecha_hasta: hoy } : r
     ); bump();
     api.del(`/propietarios?departamento_id=${deptoId}&persona_id=${personaId}`).catch(console.error);
     toast('Propietario removido');

@@ -126,4 +126,8 @@ function initSchema() {
       FOREIGN KEY (departamento_id) REFERENCES departamentos(id)
     );
   `);
+
+  // Migrations for existing tables
+  try { db.exec('ALTER TABLE propietarios ADD COLUMN fecha_desde TEXT DEFAULT NULL'); } catch {}
+  try { db.exec('ALTER TABLE propietarios ADD COLUMN fecha_hasta TEXT DEFAULT NULL'); } catch {}
 }
