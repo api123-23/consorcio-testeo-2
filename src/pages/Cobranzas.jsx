@@ -157,24 +157,27 @@ export default function Cobranzas({ edificioId, periodo, setPeriodo }) {
                     )}
                   </td>
                   <td>
-                    <div className="flex gap-1">
-                      {e.pagos.length > 0 && (
-                        <button className="btn-icon btn-sm" title="Comprobante"
-                          onClick={() => setShowComprobante(e)}>
-                          <Printer size={13} />
+                    <div className="table-actions">
+                      <div className="table-actions-group">
+                        {e.pagos.length > 0 && (
+                          <button className="btn-icon btn-sm" title="Ver comprobante"
+                            onClick={() => setShowComprobante(e)}>
+                            <Printer size={13} />
+                          </button>
+                        )}
+                        <button className="btn btn-sm btn-recargo" title="Aplicar recargo por mora"
+                          onClick={() => { setRecargoDeptoId(e.departamento.id); setShowRecargoForm(true); }}>
+                          <Percent size={12} /> Recargo
                         </button>
-                      )}
-                      <button className="btn btn-sm btn-recargo" title="Aplicar recargo por mora"
-                        onClick={() => { setRecargoDeptoId(e.departamento.id); setShowRecargoForm(true); }}>
-                        <Percent size={12} /> Recargo
-                      </button>
+                      </div>
+                      <span className="actions-divider" />
                       {e.estado === 'deudor' || e.estado === 'parcial' ? (
                         <button className="btn btn-success btn-sm"
                           onClick={() => { setEditPago(null); setShowForm(true); setPreselectDeptoId(e.departamento.id); }}>
                           {e.estado === 'parcial' ? 'Completar' : 'Cobrar'}
                         </button>
                       ) : e.estado === 'al_dia' && e.pago && (
-                        <button className="btn-icon btn-sm" title="Eliminar pago"
+                        <button className="btn-icon btn-sm btn-icon-danger" title="Eliminar pago"
                           onClick={() => setConfirmDelete(e.pago)}>
                           <Trash2 size={13} />
                         </button>

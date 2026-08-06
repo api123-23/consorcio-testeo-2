@@ -58,7 +58,8 @@ function initSchema() {
       telefono TEXT DEFAULT '',
       direccion TEXT DEFAULT '',
       observaciones TEXT DEFAULT '',
-      activo INTEGER DEFAULT 1
+      activo INTEGER DEFAULT 1,
+      user_id TEXT DEFAULT ''
     );
 
     CREATE TABLE IF NOT EXISTS propietarios (
@@ -130,4 +131,36 @@ function initSchema() {
   // Migrations for existing tables
   try { db.exec('ALTER TABLE propietarios ADD COLUMN fecha_desde TEXT DEFAULT NULL'); } catch {}
   try { db.exec('ALTER TABLE propietarios ADD COLUMN fecha_hasta TEXT DEFAULT NULL'); } catch {}
+  try { db.exec('ALTER TABLE personas ADD COLUMN user_id TEXT DEFAULT \'\''); } catch {}
+
+  // Backfill user_id for personas created before multi-account support.
+  // A persona belongs to the user who owns the edificio it is linked to.
+  db.exec(`
+    UPDATE personas SET user_id = (
+      SELECT e.user_id FROM propietarios pr
+      JOIN departamentos d ON d.id = pr.departamento_id
+      JOIN edificios e ON e.id = d.edificio_id
+      WHERE pr.persona_id = personas.id AND e.user_id != '' LIMIT 1
+    ) WHERE (user_id = '' OR user_id IS NULL)
+      AND EXISTS (
+        SELECT 1 FROM propietarios pr
+        JOIN departamentos d ON d.id = pr.departamento_id
+        JOIN edificios e ON e.id = d.edificio_id
+        WHERE pr.persona_id = personas.id AND e.user_id != ''
+      )
+  `);
+  db.exec(`
+    UPDATE personas SET user_id = (
+      SELECT e.user_id FROM inquilinos i
+      JOIN departamentos d ON d.id = i.departamento_id
+      JOIN edificios e ON e.id = d.edificio_id
+      WHERE i.persona_id = personas.id AND e.user_id != '' LIMIT 1
+    ) WHERE (user_id = '' OR user_id IS NULL)
+      AND EXISTS (
+        SELECT 1 FROM inquilinos i
+        JOIN departamentos d ON d.id = i.departamento_id
+        JOIN edificios e ON e.id = d.edificio_id
+        WHERE i.persona_id = personas.id AND e.user_id != ''
+      )
+  `);
 }

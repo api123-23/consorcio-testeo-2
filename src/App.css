@@ -555,6 +555,13 @@ tr:focus-within td { background: var(--accent-subtle); }
 .font-semibold { font-weight: 600; }
 .font-bold { font-weight: 700; }
 .w-full { width: 100%; }
+.gap-1 { gap: 4px; }
+
+/* Table actions */
+.table-actions { display: flex; align-items: center; gap: 4px; }
+.table-actions-group { display: flex; align-items: center; gap: 3px; }
+.actions-divider { width: 1px; height: 18px; background: var(--border); margin: 0 2px; flex-shrink: 0; }
+.btn-icon-danger:hover { background: rgba(239,68,68,0.12); color: var(--danger) !important; border-color: rgba(239,68,68,0.25); }
 
 /* Grid helpers */
 .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }

@@ -43,6 +43,7 @@ export function AuthProvider({ children }) {
     const { token, user } = await api.post('/auth/login', { email, password });
     localStorage.setItem('concorcio_token', token);
     localStorage.setItem('concorcio_user', JSON.stringify(user));
+    resetCache();
     setUser(user);
   };
 

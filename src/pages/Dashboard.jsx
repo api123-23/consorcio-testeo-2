@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Building2, Users, AlertCircle, CheckCircle2, DollarSign, Calendar, TrendingUp, Clock, ShieldAlert } from 'lucide-react';
+import { Building2, Users, AlertCircle, CheckCircle2, DollarSign, Calendar, TrendingUp, TrendingDown, Clock, ShieldAlert, BarChart3 } from 'lucide-react';
 import { db, getMesActual, formatPeriodo, formatMonto, getEstadoDepartamento, calcularExpensaDepartamento, getPropietariosDeDepartamento, getInquilinoActual, getDepartamentosDeEdificio, getRev, getPeriodosDeuda } from '../data/db';
 import EvolucionChart from '../components/charts.jsx';
 
@@ -151,6 +151,115 @@ export default function Dashboard({ edificioId }) {
             </div>
           </div>
         )}
+
+        {(() => {
+          const now = new Date();
+          const periodos = [];
+          for (let i = 5; i >= 0; i--) {
+            const d = new Date(now); d.setMonth(d.getMonth() - i);
+            periodos.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+          }
+          const deptosActivos = data.departamentos.filter(d => d.activo);
+          const meses = periodos.map(p => {
+            const gastos = db.getGastos().filter(g => g.periodo === p && g.edificio_id === edificioId);
+            const totalGastos = gastos.reduce((s, g) => s + g.monto, 0);
+            const pagosPeriodo = db.getPagos().filter(pg =>
+              pg.periodo === p && deptosActivos.some(d => d.id === pg.departamento_id)
+            );
+            const totalRecaudado = pagosPeriodo.reduce((s, pg) => s + pg.monto, 0);
+            const unidadesPagaron = new Set(pagosPeriodo.map(pg => pg.departamento_id)).size;
+            return {
+              periodo: p,
+              label: formatPeriodo(p),
+              gastos: totalGastos,
+              recaudado: totalRecaudado,
+              diferencia: totalRecaudado - totalGastos,
+              cobertura: totalGastos > 0 ? Math.round((totalRecaudado / totalGastos) * 100) : 0,
+              pagaron: unidadesPagaron,
+              totalUnidades: deptosActivos.length,
+            };
+          });
+          const totalGastos6 = meses.reduce((s, m) => s + m.gastos, 0);
+          const totalRecaudado6 = meses.reduce((s, m) => s + m.recaudado, 0);
+          const promedioGastos = Math.round(totalGastos6 / meses.length);
+          const promedioRecaudado = Math.round(totalRecaudado6 / meses.length);
+          const mesesSuperavit = meses.filter(m => m.diferencia >= 0).length;
+          const mesesDeficit = meses.filter(m => m.diferencia < 0).length;
+
+          return (
+            <>
+              <div className="stat-row">
+                <div className="stat-card">
+                  <div className="stat-label">Gastos totales (6m)</div>
+                  <div className="stat-value" style={{ fontSize: 18 }}>{formatMonto(totalGastos6)}</div>
+                  <div className="stat-sub">Prom. {formatMonto(promedioGastos)}/mes</div>
+                </div>
+                <div className="stat-card">
+                  <div className="stat-label">Recaudado total (6m)</div>
+                  <div className="stat-value" style={{ fontSize: 18, color: 'var(--success)' }}>{formatMonto(totalRecaudado6)}</div>
+                  <div className="stat-sub">Prom. {formatMonto(promedioRecaudado)}/mes</div>
+                </div>
+                <div className="stat-card">
+                  <div className="stat-label">Diferencia</div>
+                  <div className="stat-value" style={{ fontSize: 18, color: totalRecaudado6 >= totalGastos6 ? 'var(--success)' : 'var(--danger)' }}>
+                    {formatMonto(totalRecaudado6 - totalGastos6)}
+                  </div>
+                  <div className="stat-sub">{totalRecaudado6 >= totalGastos6 ? 'Superávit' : 'Déficit'}</div>
+                </div>
+                <div className="stat-card">
+                  <div className="stat-label">Meses</div>
+                  <div className="stat-value" style={{ fontSize: 18 }}>
+                    <span style={{ color: 'var(--success)' }}>{mesesSuperavit}</span>
+                    <span className="text-muted" style={{ fontSize: 14 }}> / </span>
+                    <span style={{ color: 'var(--danger)' }}>{mesesDeficit}</span>
+                  </div>
+                  <div className="stat-sub">superávit / déficit</div>
+                </div>
+              </div>
+
+              <div className="card">
+                <div className="card-header">
+                  <span className="card-title">Comparativa mensual</span>
+                  <BarChart3 size={16} style={{ color: 'var(--text-muted)' }} />
+                </div>
+                <div className="table-wrap" style={{ border: 'none', padding: 0 }}>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Período</th>
+                        <th>Gastos</th>
+                        <th>Recaudado</th>
+                        <th>Diferencia</th>
+                        <th>Cobertura</th>
+                        <th>Pagaron</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {meses.map(m => (
+                        <tr key={m.periodo}>
+                          <td className="font-medium">{m.label}</td>
+                          <td>{formatMonto(m.gastos)}</td>
+                          <td style={{ color: 'var(--success)' }}>{formatMonto(m.recaudado)}</td>
+                          <td>
+                            <span style={{ color: m.diferencia >= 0 ? 'var(--success)' : 'var(--danger)', fontWeight: 600 }}>
+                              {m.diferencia >= 0 ? '+' : ''}{formatMonto(m.diferencia)}
+                            </span>
+                          </td>
+                          <td>
+                            <span className={`badge ${m.cobertura >= 70 ? 'badge-success' : m.cobertura >= 40 ? 'badge-warning' : 'badge-danger'}`}>
+                              {m.cobertura}%
+                            </span>
+                          </td>
+                          <td>{m.pagaron}/{m.totalUnidades}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </>
+          );
+        })()}
 
         <div className="grid-2">
           <div className="card">

@@ -10,10 +10,12 @@ let cache = {
 let loaded = false;
 let loading = null;
 let _rev = 0;
+let generation = 0;
 export const getRev = () => _rev;
 function bump() { _rev++; }
 
 export function resetCache() {
+  generation++;
   cache = {
     edificios: [], departamentos: [], personas: [],
     propietarios: [], inquilinos: [],
@@ -28,6 +30,7 @@ export function resetCache() {
 export async function loadData() {
   if (loaded) return;
   if (loading) return loading;
+  const gen = generation;
   loading = (async () => {
     try {
       const [edificios, departamentos, personas, propietarios, inquilinos, gastos, pagos, liquidaciones, recargos] =
@@ -42,10 +45,13 @@ export async function loadData() {
           api.get('/liquidaciones'),
           api.get('/recargos'),
         ]);
+      // Si hubo un reset (cambio de cuenta) mientras la carga estaba en vuelo,
+      // descartamos esta respuesta para no mezclar datos entre usuarios.
+      if (gen !== generation) return;
       cache = { edificios, departamentos, personas, propietarios, inquilinos, gastos, pagos, liquidaciones, recargos };
       loaded = true;
     } finally {
-      loading = null;
+      if (gen === generation) loading = null;
     }
   })();
   return loading;
@@ -79,17 +85,16 @@ export function getInquilinoActual(deptoId) {
 
 export function getHistorialOcupantes(deptoId) {
   const allPropRels = cache.propietarios.filter(r => r.departamento_id === deptoId);
-  const propEntries = allPropRels.map(r => {
-    const esActivo = r.activo && !r.fecha_hasta;
-    return {
-      tipo: 'propietario',
-      persona: cache.personas.find(p => p.id === r.persona_id),
-      desde: r.fecha_desde || null,
-      hasta: r.fecha_hasta || null,
-      activo: esActivo,
-    };
-  }).filter(e => e.persona);
-  const allInqRels = cache.inquilinos.filter(r => r.departamento_id === deptoId && r.activo !== 0);
+  const propEntries = allPropRels.map(r => ({
+    tipo: 'propietario',
+    persona: cache.personas.find(p => p.id === r.persona_id),
+    desde: r.fecha_desde || null,
+    hasta: r.fecha_hasta || null,
+    activo: r.activo && !r.fecha_hasta,
+  })).filter(e => e.persona);
+  // Se incluyen TODAS las relaciones de inquilino (activas e inactivas)
+  // para que los inquilinos removidos sigan apareciendo en el historial.
+  const allInqRels = cache.inquilinos.filter(r => r.departamento_id === deptoId);
   const inqEntries = allInqRels.map(r => ({
     tipo: 'inquilino',
     persona: cache.personas.find(p => p.id === r.persona_id),
@@ -98,9 +103,10 @@ export function getHistorialOcupantes(deptoId) {
     activo: r.activo && !r.fecha_hasta,
   })).filter(e => e.persona);
   return [...propEntries, ...inqEntries].sort((a, b) => {
-    if (a.activo && !b.activo) return -1;
-    if (!a.activo && b.activo) return 1;
-    return (b.desde || '') > (a.desde || '') ? 1 : -1;
+    if (a.activo !== b.activo) return a.activo ? -1 : 1;
+    const da = a.desde || '0000-00';
+    const db = b.desde || '0000-00';
+    return db.localeCompare(da);
   });
 }
 
@@ -343,13 +349,15 @@ export const getEstadoDepartamento = (departamento_id, periodo) => {
 };
 
 export const getPeriodosDeuda = (departamento_id) => {
+  const depto = cache.departamentos.find(d => d.id === departamento_id);
+  if (!depto) return 0;
   const hoy = new Date();
   let deuda = 0;
   for (let i = 1; i <= 6; i++) {
     const d = new Date(hoy);
     d.setMonth(d.getMonth() - i);
     const periodo = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-    const gastosEdificio = cache.gastos.filter(g => g.periodo === periodo);
+    const gastosEdificio = cache.gastos.filter(g => g.periodo === periodo && g.edificio_id === depto.edificio_id);
     if (gastosEdificio.length === 0) continue;
     const pagado = cache.pagos.some(p => p.departamento_id === departamento_id && p.periodo === periodo);
     if (!pagado) deuda++;
